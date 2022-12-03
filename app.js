@@ -1,12 +1,7 @@
 import * as mihome from 'node-mihome'
-import { config } from 'dotenv'
-config()
+import { country, password, username } from './env.js'
 
 mihome.miioProtocol.init()
-
-const username = process.env.MI_CLOUD_USERNAME
-const password = process.env.MI_CLOUD_PASSWORD
-const country = process.env.MI_CLOUD_COUNTRY
 
 await mihome.miCloudProtocol.login(username, password)
 
