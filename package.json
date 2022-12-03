@@ -5,8 +5,11 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": "node app.js",
-    "test": "jest"
+    "start": "npm run umzug db:migrate && node app.js",
+    "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore test/ app.js",
+    "test": "jest",
+    "job:check-status": "node jobs/check-status.js",
+    "umzug": "node ./umzug/cli.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +26,9 @@
   "homepage": "https://github.com/vitaly-rudenko/outage-tracker#readme",
   "dependencies": {
     "dotenv": "^16.0.3",
-    "node-mihome": "^0.0.32"
+    "node-mihome": "^0.0.32",
+    "pg": "^8.8.0",
+    "pino": "^8.7.0",
+    "umzug": "^3.2.1"
   }
 }

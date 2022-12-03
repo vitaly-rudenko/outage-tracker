@@ -1,13 +1,25 @@
 import * as mihome from 'node-mihome'
 import { country, password, username } from './env.js'
 
-mihome.miioProtocol.init()
+async function start() {
+  mihome.miioProtocol.init()
 
-await mihome.miCloudProtocol.login(username, password)
+  console.log('Logging into Mi Cloud...')
+  await mihome.miCloudProtocol.login(username, password)
 
-const options = { country }
-const devices = await mihome.miCloudProtocol.getDevices(null, options)
+  const options = { country }
 
-console.log(
-  devices.map(d => `${d.name}: ${d.isOnline ? 'online' : 'offline'}`).join('\n')
-)
+  console.log('Fetching devices...')
+  const devices = await mihome.miCloudProtocol.getDevices(null, options)
+
+  console.log(
+    devices.map(d => `${d.name}: ${d.isOnline ? 'online' : 'offline'}`).join('\n')
+  )
+}
+
+start()
+  .then(() => console.log('Started!'))
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
