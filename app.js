@@ -1,3 +1,5 @@
+import { formatDailyStats } from './app/formatDailyStats.js'
+import { formatTime } from './app/formatTime.js'
 import { gatherDailyStats } from './app/gatherDailyStats.js'
 import { MiHomeStatusChecker } from './app/MiHomeStatusChecker.js'
 import { Status } from './app/Status.js'
@@ -46,19 +48,13 @@ async function start() {
     createStatus(false, '22:05'),
   ]
 
-  const { perHour, totalOnlineMs } = gatherDailyStats(dailyStatuses)
-
-  console.log(perHour, totalOnlineMs)
+  const date = new Date('2020-01-01 12:00')
+  const { perHour, totalOnlineMs } = gatherDailyStats(date, dailyStatuses, createStatus(false, '23:00'))
 
   console.log(perHour.map(({ hour, onlineMs }) => `${hour}:00 – ${Math.floor(onlineMs / 60_000)} minutes`).join('\n'))
   console.log('Total online for', formatTime(totalOnlineMs), 'hours')
-}
 
-function formatTime(ms) {
-  const hours = Math.floor(ms / (60 * 60_000))
-  const minutes = Math.floor(ms / 60_000) % 60
-
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  console.log(formatDailyStats(date, { perHour, totalOnlineMs }))
 }
 
 start()
