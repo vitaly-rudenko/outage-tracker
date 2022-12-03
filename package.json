@@ -1,0 +1,28 @@
+{
+  "name": "outage-tracker",
+  "version": "0.0.1",
+  "description": "Power outage tracker using Telegram Bot API and Xiaomi Mi Home API",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitaly-rudenko/outage-tracker.git"
+  },
+  "keywords": [
+    "telegram-bot-api"
+  ],
+  "author": "Vitaly Rudenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vitaly-rudenko/outage-tracker/issues"
+  },
+  "homepage": "https://github.com/vitaly-rudenko/outage-tracker#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "node-mihome": "^0.0.32"
+  }
+}
