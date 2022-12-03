@@ -4,9 +4,9 @@ module.exports = {
     await db.query(`
       CREATE TABLE status (
         id SERIAL PRIMARY KEY,
-        chat_id VARCHAR,
+        user_id VARCHAR,
         is_online BOOLEAN,
-        devices JSONB,
+        raw JSONB,
         created_at TIMESTAMPTZ
       );
     `)

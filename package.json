@@ -7,7 +7,7 @@
   "scripts": {
     "start": "npm run umzug db:migrate && node app.js",
     "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore test/ app.js",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "job:check-status": "node jobs/check-status.js",
     "umzug": "node ./umzug/cli.js"
   },
@@ -29,6 +29,10 @@
     "node-mihome": "^0.0.32",
     "pg": "^8.8.0",
     "pino": "^8.7.0",
+    "pino-pretty": "^9.1.1",
     "umzug": "^3.2.1"
+  },
+  "devDependencies": {
+    "jest": "^29.3.1"
   }
 }

@@ -1,20 +1,64 @@
-import * as mihome from 'node-mihome'
+import { gatherDailyStats } from './app/gatherDailyStats.js'
+import { MiHomeStatusChecker } from './app/MiHomeStatusChecker.js'
+import { Status } from './app/Status.js'
 import { country, password, username } from './env.js'
 
 async function start() {
-  mihome.miioProtocol.init()
+  const statusChecker = new MiHomeStatusChecker({
+    country,
+    password,
+    username,
+  })
 
-  console.log('Logging into Mi Cloud...')
-  await mihome.miCloudProtocol.login(username, password)
+  // await statusChecker.init()
 
-  const options = { country }
+  // console.log(await statusChecker.check({ userId: 'fake-user-id' }))
 
-  console.log('Fetching devices...')
-  const devices = await mihome.miCloudProtocol.getDevices(null, options)
+  function createStatus(isOnline, time) {
+    return new Status({
+      raw: {},
+      userId: '',
+      isOnline,
+      createdAt: new Date(`2020-01-01 ${time}`)
+    })
+  }
 
-  console.log(
-    devices.map(d => `${d.name}: ${d.isOnline ? 'online' : 'offline'}`).join('\n')
-  )
+  const latestStatus = createStatus(true, '13:50')
+  const currentStatus = createStatus(false, '15:30')
+
+  const durationMs = currentStatus.createdAt.getTime() - latestStatus.createdAt.getTime()
+
+  if (latestStatus.isOnline && !currentStatus.isOnline) {
+    console.log(`❌ Your home is now offline after ${formatTime(durationMs)} hours of being online`)
+  }
+
+  if (!latestStatus.isOnline && currentStatus.isOnline) {
+    console.log(`✅ Your home is now online after ${formatTime(durationMs)} hours of being offline`)
+  }
+
+  // IMPORTANT: assume that there are NO repeating statuses (true is always followed by false and vice versa)
+  const dailyStatuses = [
+    createStatus(true, '0:05'),
+    createStatus(false, '4:40'),
+    createStatus(true, '15:05'),
+    createStatus(false, '17:20'),
+    createStatus(true, '17:55'),
+    createStatus(false, '22:05'),
+  ]
+
+  const { perHour, totalOnlineMs } = gatherDailyStats(dailyStatuses)
+
+  console.log(perHour, totalOnlineMs)
+
+  console.log(perHour.map(({ hour, onlineMs }) => `${hour}:00 – ${Math.floor(onlineMs / 60_000)} minutes`).join('\n'))
+  console.log('Total online for', formatTime(totalOnlineMs), 'hours')
+}
+
+function formatTime(ms) {
+  const hours = Math.floor(ms / (60 * 60_000))
+  const minutes = Math.floor(ms / 60_000) % 60
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
 }
 
 start()
