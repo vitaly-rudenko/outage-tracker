@@ -6,7 +6,8 @@ export function formatDailyStats(date, { totalOnlineMs, perHour }) {
   message += `On ${date.toDateString()} your home has been:\n`
   message += `✅ Online for ${formatTime(totalOnlineMs)} hours\n`
   message += `❌ Offline for ${formatTime(24 * 60 * 60_000 - totalOnlineMs)} hours\n`
-  message += `\n`
+  message += '\n'
+  message += '```\n'
 
   for (let hour = 0; hour < 24; hour += 2) {
     const onlineMs = perHour.find(p => p.hour === hour).onlineMs + perHour.find(p => p.hour === hour + 1).onlineMs
@@ -22,8 +23,10 @@ export function formatDailyStats(date, { totalOnlineMs, perHour }) {
       icon = '🟧'
     }
 
-    message += `${icon} ${hour}:00 – ${hour + 1}:59\n`
+    message += `${icon} ${String(hour).padStart(2, '0')}:00 - ${String(hour + 1).padStart(2, '0')}:59 | ${Math.round(percentage * 100)}%\n`
   }
+
+  message += '```'
 
   return message
 }

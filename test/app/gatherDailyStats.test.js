@@ -1,23 +1,8 @@
 import { gatherDailyStats } from '../../app/gatherDailyStats.js'
-import { Status } from '../../app/Status.js'
-
-const today = new Date('2020-01-02')
-
-function createStatus(isOnline, time, date = '2020-01-02') {
-  return new Status({
-    raw: {},
-    userId: '',
-    isOnline,
-    createdAt: new Date(`${date} ${time}`)
-  })
-}
-
-function createLastStatusBefore(isOnline) {
-  return createStatus(isOnline, '23:00', '2020-01-01')
-}
+import { today, createLastStatusBefore, createStatus } from './helpers.js'
 
 describe('gatherDailyStats()', () => {
-  it('should gather daily stats (simple, before: true)', () => {
+  it('should gather daily stats (empty, before: true)', () => {
     expect(gatherDailyStats(today, [], createLastStatusBefore(true))).toEqual({
       totalOnlineMs: 86400000,
       perHour: [
@@ -49,7 +34,7 @@ describe('gatherDailyStats()', () => {
     })
   })
 
-  it('should gather daily stats (simple, before: false)', () => {
+  it('should gather daily stats (empty, before: false)', () => {
     expect(gatherDailyStats(today, [], createLastStatusBefore(false))).toEqual({
       totalOnlineMs: 0,
       perHour: [
@@ -58,6 +43,42 @@ describe('gatherDailyStats()', () => {
         { hour: 2, onlineMs: 0 },
         { hour: 3, onlineMs: 0 },
         { hour: 4, onlineMs: 0 },
+        { hour: 5, onlineMs: 0 },
+        { hour: 6, onlineMs: 0 },
+        { hour: 7, onlineMs: 0 },
+        { hour: 8, onlineMs: 0 },
+        { hour: 9, onlineMs: 0 },
+        { hour: 10, onlineMs: 0 },
+        { hour: 11, onlineMs: 0 },
+        { hour: 12, onlineMs: 0 },
+        { hour: 13, onlineMs: 0 },
+        { hour: 14, onlineMs: 0 },
+        { hour: 15, onlineMs: 0 },
+        { hour: 16, onlineMs: 0 },
+        { hour: 17, onlineMs: 0 },
+        { hour: 18, onlineMs: 0 },
+        { hour: 19, onlineMs: 0 },
+        { hour: 20, onlineMs: 0 },
+        { hour: 21, onlineMs: 0 },
+        { hour: 22, onlineMs: 0 },
+        { hour: 23, onlineMs: 0 }
+      ]
+    })
+  })
+
+  it('should gather daily stats (simple, before: true)', () => {
+    const dailyStatuses = [
+      createStatus(false, '4:40'),
+    ]
+
+    expect(gatherDailyStats(today, dailyStatuses, createLastStatusBefore(true))).toEqual({
+      totalOnlineMs: 16800000,
+      perHour: [
+        { hour: 0, onlineMs: 3600000 },
+        { hour: 1, onlineMs: 3600000 },
+        { hour: 2, onlineMs: 3600000 },
+        { hour: 3, onlineMs: 3600000 },
+        { hour: 4, onlineMs: 2400000 },
         { hour: 5, onlineMs: 0 },
         { hour: 6, onlineMs: 0 },
         { hour: 7, onlineMs: 0 },
