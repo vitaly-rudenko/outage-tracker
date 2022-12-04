@@ -1,7 +1,7 @@
 export class Status {
-  constructor({ raw, userId, isOnline, createdAt }) {
+  constructor({ id = undefined, raw = undefined, isOnline, createdAt }) {
+    this.id = id
     this.raw = raw
-    this.userId = userId
     this.isOnline = isOnline
     this.createdAt = createdAt
   }

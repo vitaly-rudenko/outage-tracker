@@ -17,11 +17,10 @@ export class MiHomeStatusChecker {
     await mihome.miCloudProtocol.login(this.username, this.password)
   }
 
-  async check({ userId }) {
+  async check() {
     const devices = await mihome.miCloudProtocol.getDevices(null, { country: this.country })
 
     return new Status({
-      userId,
       raw: devices,
       isOnline: devices.some(device => device.isOnline),
       createdAt: new Date(),

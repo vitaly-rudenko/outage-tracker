@@ -4,10 +4,9 @@ module.exports = {
     await db.query(`
       CREATE TABLE status (
         id SERIAL PRIMARY KEY,
-        user_id VARCHAR,
-        is_online BOOLEAN,
+        is_online BOOLEAN NOT NULL,
         raw JSONB,
-        created_at TIMESTAMPTZ
+        created_at TIMESTAMPTZ NOT NULL
       );
     `)
   },

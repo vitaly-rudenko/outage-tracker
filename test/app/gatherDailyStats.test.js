@@ -3,7 +3,13 @@ import { today, createLastStatusBefore, createStatus } from './helpers.js'
 
 describe('gatherDailyStats()', () => {
   it('should gather daily stats (empty, before: true)', () => {
-    expect(gatherDailyStats(today, [], createLastStatusBefore(true))).toEqual({
+    expect(
+      gatherDailyStats({
+        date: today,
+        statuses: [],
+        latestStatusBefore: createLastStatusBefore(true)
+      })
+    ).toEqual({
       totalOnlineMs: 86400000,
       perHour: [
         { hour: 0, onlineMs: 3600000 },
@@ -35,7 +41,13 @@ describe('gatherDailyStats()', () => {
   })
 
   it('should gather daily stats (empty, before: false)', () => {
-    expect(gatherDailyStats(today, [], createLastStatusBefore(false))).toEqual({
+    expect(
+      gatherDailyStats({
+        date: today,
+        statuses: [],
+        latestStatusBefore: createLastStatusBefore(false)
+      })
+    ).toEqual({
       totalOnlineMs: 0,
       perHour: [
         { hour: 0, onlineMs: 0 },
@@ -66,12 +78,59 @@ describe('gatherDailyStats()', () => {
     })
   })
 
-  it('should gather daily stats (simple, before: true)', () => {
-    const dailyStatuses = [
-      createStatus(false, '4:40'),
-    ]
+  it('should gather daily stats (empty, until, before: true)', () => {
+    const date = new Date(today)
+    date.setHours(14)
+    date.setMinutes(15)
 
-    expect(gatherDailyStats(today, dailyStatuses, createLastStatusBefore(true))).toEqual({
+    expect(
+      gatherDailyStats({
+        date,
+        until: true,
+        statuses: [],
+        latestStatusBefore: createLastStatusBefore(true)
+      })
+    ).toEqual({
+      totalOnlineMs: 51300000,
+      perHour: [
+        { hour: 0, onlineMs: 3600000 },
+        { hour: 1, onlineMs: 3600000 },
+        { hour: 2, onlineMs: 3600000 },
+        { hour: 3, onlineMs: 3600000 },
+        { hour: 4, onlineMs: 3600000 },
+        { hour: 5, onlineMs: 3600000 },
+        { hour: 6, onlineMs: 3600000 },
+        { hour: 7, onlineMs: 3600000 },
+        { hour: 8, onlineMs: 3600000 },
+        { hour: 9, onlineMs: 3600000 },
+        { hour: 10, onlineMs: 3600000 },
+        { hour: 11, onlineMs: 3600000 },
+        { hour: 12, onlineMs: 3600000 },
+        { hour: 13, onlineMs: 3600000 },
+        { hour: 14, onlineMs: 900000 },
+        { hour: 15, onlineMs: -1 },
+        { hour: 16, onlineMs: -1 },
+        { hour: 17, onlineMs: -1 },
+        { hour: 18, onlineMs: -1 },
+        { hour: 19, onlineMs: -1 },
+        { hour: 20, onlineMs: -1 },
+        { hour: 21, onlineMs: -1 },
+        { hour: 22, onlineMs: -1 },
+        { hour: 23, onlineMs: -1 }
+      ]
+    })
+  })
+
+  it('should gather daily stats (simple, before: true)', () => {
+    expect(
+      gatherDailyStats({
+        date: today,
+        statuses: [
+          createStatus(false, '4:40'),
+        ],
+        latestStatusBefore: createLastStatusBefore(true)
+      })
+    ).toEqual({
       totalOnlineMs: 16800000,
       perHour: [
         { hour: 0, onlineMs: 3600000 },
@@ -103,16 +162,20 @@ describe('gatherDailyStats()', () => {
   })
 
   it('should gather daily stats (complex, before: false)', () => {
-    const dailyStatuses = [
-      createStatus(true,  '0:05'),
-      createStatus(false, '4:40'),
-      createStatus(true,  '15:05'),
-      createStatus(false, '17:20'),
-      createStatus(true,  '17:55'),
-      createStatus(false, '22:05'),
-    ]
-
-    expect(gatherDailyStats(today, dailyStatuses, createLastStatusBefore(false))).toEqual({
+    expect(
+      gatherDailyStats({
+        date: today,
+        statuses: [
+          createStatus(true,  '0:05'),
+          createStatus(false, '4:40'),
+          createStatus(true,  '15:05'),
+          createStatus(false, '17:20'),
+          createStatus(true,  '17:55'),
+          createStatus(false, '22:05'),
+        ],
+        latestStatusBefore: createLastStatusBefore(false)
+      })
+    ).toEqual({
       totalOnlineMs: 39600000,
       perHour: [
         { hour: 0, onlineMs: 3300000 },
@@ -139,6 +202,54 @@ describe('gatherDailyStats()', () => {
         { hour: 21, onlineMs: 3600000 },
         { hour: 22, onlineMs: 300000 },
         { hour: 23, onlineMs: 0 }
+      ]
+    })
+  })
+
+  it('should gather daily stats (complex, until, before: true)', () => {
+    const date = new Date(today)
+    date.setHours(18)
+    date.setMinutes(55)
+
+    expect(
+      gatherDailyStats({
+        date,
+        until: true,
+        statuses: [
+          createStatus(false, '4:40'),
+          createStatus(true,  '15:05'),
+          createStatus(false, '17:20'),
+          createStatus(true,  '17:55'),
+        ],
+        latestStatusBefore: createLastStatusBefore(true)
+      })
+    ).toEqual({
+      totalOnlineMs: 28500000,
+      perHour: [
+        { hour: 0, onlineMs: 3600000 },
+        { hour: 1, onlineMs: 3600000 },
+        { hour: 2, onlineMs: 3600000 },
+        { hour: 3, onlineMs: 3600000 },
+        { hour: 4, onlineMs: 2400000 },
+        { hour: 5, onlineMs: 0 },
+        { hour: 6, onlineMs: 0 },
+        { hour: 7, onlineMs: 0 },
+        { hour: 8, onlineMs: 0 },
+        { hour: 9, onlineMs: 0 },
+        { hour: 10, onlineMs: 0 },
+        { hour: 11, onlineMs: 0 },
+        { hour: 12, onlineMs: 0 },
+        { hour: 13, onlineMs: 0 },
+        { hour: 14, onlineMs: 0 },
+        { hour: 15, onlineMs: 3300000 },
+        { hour: 16, onlineMs: 3600000 },
+        { hour: 17, onlineMs: 1500000 },
+        { hour: 18, onlineMs: 3300000 },
+        { hour: 19, onlineMs: -1 },
+        { hour: 20, onlineMs: -1 },
+        { hour: 21, onlineMs: -1 },
+        { hour: 22, onlineMs: -1 },
+        { hour: 23, onlineMs: -1 }
       ]
     })
   })

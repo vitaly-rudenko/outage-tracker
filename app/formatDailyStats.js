@@ -3,9 +3,9 @@ import { formatTime } from './formatTime.js'
 export function formatDailyStats(date, { totalOnlineMs, perHour }) {
   let message = ''
 
-  message += `On ${date.toDateString()} your home has been:\n`
-  message += `✅ Online for ${formatTime(totalOnlineMs)} hours\n`
-  message += `❌ Offline for ${formatTime(24 * 60 * 60_000 - totalOnlineMs)} hours\n`
+  message += `Статистика за *${date.toDateString()}*:\n`
+  message += `✅ Онлайн: ${formatTime(totalOnlineMs)} годин\n`
+  message += `❌ Офлайн: ${formatTime(24 * 60 * 60_000 - totalOnlineMs)} годин\n`
   message += '\n'
   message += '```\n'
 
