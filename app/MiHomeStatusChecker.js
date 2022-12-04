@@ -10,10 +10,7 @@ export class MiHomeStatusChecker {
   }
   
   async init() {
-    logger.info('Initializing Miio protocol')
     mihome.miioProtocol.init()
-
-    logger.info('Logging into Mi Home account')
     await mihome.miCloudProtocol.login(this.username, this.password)
   }
 

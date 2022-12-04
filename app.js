@@ -1,11 +1,12 @@
 import { Telegraf } from 'telegraf'
-import * as express from 'express'
-import * as pg from 'pg'
+import express from 'express'
+import pg from 'pg'
 import { logger } from './logger.js'
 import {
   country,
   databaseUrl,
   debugChatId,
+  domain,
   password,
   telegramBotToken,
   username,
@@ -21,10 +22,8 @@ import { formatDailyStats } from './app/formatDailyStats.js'
 import { formatTime } from './app/formatTime.js'
 
 async function start() {
-  const pgClient = new pg.Client(databaseUrl)
-  await pgClient.connect()
+  logger.info({}, 'Starting...')
 
-  const statusStorage = new StatusPostgresStorage(pgClient)
   const statusChecker = new MiHomeStatusChecker({
     country,
     password,
@@ -32,6 +31,13 @@ async function start() {
   })
 
   await statusChecker.init()
+  logger.info({}, 'Mi Home has been connected')
+
+  const pgClient = new pg.Client(databaseUrl)
+  await pgClient.connect()
+  logger.info({}, 'Postgres has been connected')
+
+  const statusStorage = new StatusPostgresStorage(pgClient)
 
   const bot = new Telegraf(telegramBotToken)
   const errorLogger = new TelegramErrorLogger({
@@ -131,15 +137,9 @@ async function start() {
   const port = Number(process.env.PORT) || 3001
 
   await new Promise((resolve) => app.listen(port, () => resolve()))
-
-  try {
-    await bot.telegram.deleteWebhook()
-  } catch (error) {
-    logger.warn({ error }, 'Could not delete webhook:')
-  }
+  logger.info({}, 'Express app has been started')
 
   if (useWebhooks) {
-    const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
 
     logger.info({ webhookUrl }, 'Setting webhook')
@@ -162,13 +162,13 @@ async function start() {
   } else {
     await bot.launch()
 
-    logger.info('Telegram bot is running')
+    logger.info({}, 'Telegram bot is running')
   }
 }
 
 start()
-  .then(() => console.log('Started!'))
+  .then(() => logger.info({}, 'Started!'))
   .catch((error) => {
-    console.error(error)
+    logger.error(error, 'Unexpected starting error')
     process.exit(1)
   })
