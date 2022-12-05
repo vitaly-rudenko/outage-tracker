@@ -23,20 +23,6 @@ import { formatTime } from './app/formatTime.js'
 import { Status } from './app/Status.js'
 
 async function start() {
-  const date = new Date('2020-01-02 14:15')
-
-  const stats = gatherDailyStats({
-    date,
-    until: true,
-    statuses: [],
-    latestStatusBefore: new Status({
-      isOnline: true,
-      createdAt: new Date('2020-01-01 12:00')
-    })
-  })
-
-  console.log(formatDailyStats(date, stats))
-
   logger.info({}, 'Starting...')
 
   const statusChecker = new MiHomeStatusChecker({
