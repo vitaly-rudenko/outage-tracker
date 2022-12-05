@@ -2,13 +2,9 @@ export function gatherDailyStats({ date, until = false, statuses, latestStatusBe
   statuses.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
 
   const perHour = []
-  let totalOnlineMs = 0
+  let onlineMs = 0
+  let totalMs = 0
   for (let hour = 0; hour < 24; hour++) {
-    if (until && hour > date.getHours()) {
-      perHour.push({ hour, onlineMs: -1 })
-      continue
-    }
-
     const minDate = new Date(date)
     minDate.setHours(hour)
     minDate.setMinutes(0)
@@ -31,41 +27,49 @@ export function gatherDailyStats({ date, until = false, statuses, latestStatusBe
           ? !statusesInBetween[0].isOnline
           : true
 
-    let onlineMs = 0
+    let hourOnlineMs = 0
     for (let i = 0; i < statusesInBetween.length; i++) {
       const status = statusesInBetween[i]
       if (status.isOnline) continue
 
       const previousStatus = statusesInBetween[i - 1]
       if (previousStatus) {
-        onlineMs += status.createdAt.getTime() - previousStatus.createdAt.getTime()
+        hourOnlineMs += status.createdAt.getTime() - previousStatus.createdAt.getTime()
       } else if (startedOnline) {
-        onlineMs += status.createdAt.getTime() - minDate.getTime()
+        hourOnlineMs += status.createdAt.getTime() - minDate.getTime()
       }
     }
 
     if (statusesInBetween.length === 0 && startedOnline) {
-      onlineMs = 60 * 60_000
+      hourOnlineMs = 60 * 60_000
     }
 
     if (statusesInBetween.length > 0) {
       const lastStatus = statusesInBetween[statusesInBetween.length - 1]
       if (lastStatus.isOnline) {
-        onlineMs += maxDate.getTime() - lastStatus.createdAt.getTime()
+        hourOnlineMs += maxDate.getTime() - lastStatus.createdAt.getTime()
       }
     }
 
-    if (until && hour === date.getHours()) {
-      onlineMs = Math.min(onlineMs, date.getMinutes() * 60_000 + date.getSeconds() * 1000 + date.getMilliseconds())
+    let hourTotalMs = 60 * 60_000
+    if (until) {
+      if (hour === date.getHours()) {
+        hourTotalMs = date.getMinutes() * 60_000 + date.getSeconds() * 1000 + date.getMilliseconds()
+      } else if (hour > date.getHours()) {
+        hourTotalMs = 0
+      }
     }
 
-    totalOnlineMs += onlineMs
+    hourOnlineMs = Math.min(hourOnlineMs, hourTotalMs)
+    onlineMs += hourOnlineMs
+    totalMs += hourTotalMs
 
-    perHour.push({ hour, onlineMs })
+    perHour.push({ hour, onlineMs: hourOnlineMs, totalMs: hourTotalMs })
   }
 
   return {
     perHour,
-    totalOnlineMs,
+    onlineMs,
+    totalMs,
   }
 }
