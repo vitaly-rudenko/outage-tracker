@@ -5,10 +5,11 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": "npm run umzug db:migrate && node app.js",
-    "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore test/ app.js",
+    "start": "npm run migrate && node app.js",
+    "start:dev": "npm run migrate && nodemon --legacy-watch --ignore test/ app.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "job:check-status": "node jobs/check-status.js",
+    "job:check-status": "npm run migrate && node jobs/check-status.js",
+    "migrate": "npm run umzug db:migrate",
     "umzug": "node ./umzug/cli.js"
   },
   "repository": {

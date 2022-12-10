@@ -14,7 +14,13 @@ export class StatusPostgresStorage {
         INSERT INTO status (is_online, raw, created_at)
         VALUES ($1, $2, $3)
         RETURNING id;
-      `, [status.isOnline, status.raw, status.createdAt])
+      `,
+        [
+          status.isOnline,
+          status.raw ? JSON.stringify(status.raw) : null,
+          status.createdAt,
+        ]
+      )
 
       return this.findById(response.rows[0]['id'])
     } catch (error) {
@@ -71,57 +77,69 @@ export class StatusPostgresStorage {
     return results[0]
   }
 
-    /**
-     * @param {{
-     *   ids?: string[],
-     *   minDate?: Date,
-     *   maxDate?: Date,
-     *   limit?: number,
-     *   offset?: number,
-     *   sort?: 'ascending' | 'descending'
-     * }} options
-     */
-    async _find({ ids, minDate, maxDate, limit, offset, sort } = {}) {
-      const conditions = []
-      const variables = []
-  
-      if (ids && Array.isArray(ids)) {
-        if (ids.length === 0) {
-          throw new Error('"ids" cannot be empty')
-        }
-  
-        conditions.push(`s.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-        variables.push(...ids)
+  /**
+   * @param {{
+   *   ids?: string[],
+   *   minDate?: Date,
+   *   maxDate?: Date,
+   *   limit?: number,
+   *   offset?: number,
+   *   sort?: 'ascending' | 'descending'
+   * }} options
+   */
+  async _find({ ids, minDate, maxDate, limit, offset, sort } = {}) {
+    const conditions = []
+    const variables = []
+
+    if (ids && Array.isArray(ids)) {
+      if (ids.length === 0) {
+        throw new Error('"ids" cannot be empty')
       }
 
-      if (minDate) {
-        conditions.push(`s.created_at >= $${variables.length}`)
-        variables.push(minDate)
-      }
-
-      if (maxDate) {
-        conditions.push(`s.created_at < $${variables.length}`)
-        variables.push(maxDate)
-      }
-  
-      if (conditions.length === 0) {
-        throw new Error('No conditions were provided for the search')
-      }
-  
-      const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-      const paginationClause = [
-        Number.isInteger(limit) && `LIMIT ${limit}`,
-        Number.isInteger(offset) && `OFFSET ${offset}`
-      ].filter(Boolean).join(' ')
-  
-      const response = await this._client.query(`
-        SELECT s.id, s.user_id, s.is_online, s.raw, s.created_at
-        FROM status s ${whereClause}
-        ORDER BY created_at ${sort === 'ascending' ? 'ASC' : 'DESC'} ${paginationClause};
-      `, variables)
-  
-      return response.rows.map(row => this.deserializeStatus(row))
+      conditions.push(
+        `s.id IN (${ids
+          .map((_, i) => `$${variables.length + i + 1}`)
+          .join(', ')})`
+      )
+      variables.push(...ids)
     }
+
+    if (minDate) {
+      conditions.push(`s.created_at >= $${variables.length}`)
+      variables.push(minDate)
+    }
+
+    if (maxDate) {
+      conditions.push(`s.created_at < $${variables.length}`)
+      variables.push(maxDate)
+    }
+
+    if (conditions.length === 0) {
+      throw new Error('No conditions were provided for the search')
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
+    const paginationClause = [
+      Number.isInteger(limit) && `LIMIT ${limit}`,
+      Number.isInteger(offset) && `OFFSET ${offset}`,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const response = await this._client.query(
+      `
+        SELECT s.id, s.is_online, s.raw, s.created_at
+        FROM status s ${whereClause}
+        ORDER BY created_at ${
+          sort === 'ascending' ? 'ASC' : 'DESC'
+        } ${paginationClause};
+      `,
+      variables
+    )
+
+    return response.rows.map((row) => this.deserializeStatus(row))
+  }
 
   deserializeStatus(row) {
     return new Status({

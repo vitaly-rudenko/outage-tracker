@@ -5,7 +5,7 @@ services:
     image: postgres:13-alpine
     environment:
       POSTGRES_DB: "outage_tracker"
-      POSTGRES_USER: "outage_tracker"
+      POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "p4ssw0rd"
     ports:
       - 5432:5432
