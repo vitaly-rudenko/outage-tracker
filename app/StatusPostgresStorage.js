@@ -105,17 +105,13 @@ export class StatusPostgresStorage {
     }
 
     if (minDate) {
-      conditions.push(`s.created_at >= $${variables.length}`)
       variables.push(minDate)
+      conditions.push(`s.created_at >= $${variables.length}`)
     }
 
     if (maxDate) {
-      conditions.push(`s.created_at < $${variables.length}`)
       variables.push(maxDate)
-    }
-
-    if (conditions.length === 0) {
-      throw new Error('No conditions were provided for the search')
+      conditions.push(`s.created_at < $${variables.length}`)
     }
 
     const whereClause =
