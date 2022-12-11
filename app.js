@@ -20,23 +20,17 @@ import { condenseStatuses } from './app/condenseStatuses.js'
 import { gatherDailyStats } from './app/gatherDailyStats.js'
 import { formatDailyStats } from './app/formatDailyStats.js'
 import { formatTime } from './app/formatTime.js'
-import { Status } from './app/Status.js'
 
 async function start() {
-  logger.info({}, 'Starting...')
-
   const statusChecker = new MiHomeStatusChecker({
     country,
     password,
     username,
   })
 
-  await statusChecker.init()
-  logger.info({}, 'Mi Home has been connected')
-
+  logger.info({}, 'Connecting to Postgres')
   const pgClient = new pg.Client(databaseUrl)
   await pgClient.connect()
-  logger.info({}, 'Postgres has been connected')
 
   const statusStorage = new StatusPostgresStorage(pgClient)
 
@@ -50,7 +44,8 @@ async function start() {
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
   bot.telegram.setMyCommands([
-    { command: 'daily', description: 'Get daily stats' },
+    { command: 'now', description: 'Get current status' },
+    { command: 'today', description: 'Get daily stats' },
     { command: 'start', description: 'Start' },
     { command: 'version', description: 'Version' },
   ])
@@ -65,6 +60,10 @@ async function start() {
       return next()
     })
   }
+
+  bot.start(async (context) => {
+    await context.reply('Hello!')
+  })
 
   bot.command('version', versionCommand())
   bot.command('now', async (context) => {
@@ -99,7 +98,7 @@ async function start() {
     const dailyStats = gatherDailyStats({ date, until: true, statuses, latestStatusBefore })
 
     await context.reply(
-      formatDailyStats(date, dailyStats),
+      formatDailyStats({ date, dailyStats, aggregateHours: 2 }),
       { parse_mode: 'MarkdownV2' }
     )
   })
@@ -137,8 +136,15 @@ async function start() {
 
   const port = Number(process.env.PORT) || 3001
 
+  logger.info({}, 'Starting Express app')
   await new Promise((resolve) => app.listen(port, () => resolve()))
-  logger.info({}, 'Express app has been started')
+
+  try {
+    logger.info({}, 'Removing existing webhook')
+    await bot.telegram.deleteWebhook()
+  } catch (error) {
+    logger.warn({ error }, 'Could not delete webhook:')
+  }
 
   if (useWebhooks) {
     const webhookUrl = `${domain}/bot${telegramBotToken}`
@@ -161,9 +167,9 @@ async function start() {
       `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}`
     )
   } else {
-    await bot.launch()
+    logger.info({}, 'Starting Telegram bot')
 
-    logger.info({}, 'Telegram bot is running')
+    bot.launch()
   }
 }
 
