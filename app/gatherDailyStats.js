@@ -1,5 +1,20 @@
-export function gatherDailyStats({ date, until = false, statuses, latestStatusBefore }) {
+export function gatherDailyStats({
+  date,
+  until = false,
+  statuses,
+  latestStatusBefore,
+}) {
   statuses.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+
+  const startOfTheDay = new Date(date)
+  startOfTheDay.setHours(0)
+  startOfTheDay.setMinutes(0)
+  startOfTheDay.setSeconds(0)
+  startOfTheDay.setMilliseconds(0)
+
+  const startingStatusDate = latestStatusBefore
+    ? startOfTheDay
+    : statuses[0]?.createdAt
 
   const perHour = []
   let onlineMs = 0
@@ -17,15 +32,19 @@ export function gatherDailyStats({ date, until = false, statuses, latestStatusBe
     maxDate.setSeconds(0)
     maxDate.setMilliseconds(0)
 
-    const statusBefore = statuses.filter(s => s.createdAt.getTime() < minDate.getTime()).pop()
-    const statusesInBetween = statuses.filter(s => s.createdAt.getTime() >= minDate.getTime() && s.createdAt.getTime() < maxDate.getTime())
+    const statusBefore = statuses
+      .filter((s) => s.createdAt.getTime() < minDate.getTime())
+      .pop()
+    const statusesInBetween = statuses.filter(
+      (s) =>
+        s.createdAt.getTime() >= minDate.getTime() &&
+        s.createdAt.getTime() < maxDate.getTime()
+    )
     const startedOnline = statusBefore
       ? statusBefore.isOnline
       : latestStatusBefore
-        ? latestStatusBefore.isOnline
-        : statusesInBetween.length > 0
-          ? !statusesInBetween[0].isOnline
-          : true
+      ? latestStatusBefore.isOnline
+      : false
 
     let hourOnlineMs = 0
     for (let i = 0; i < statusesInBetween.length; i++) {
@@ -34,7 +53,8 @@ export function gatherDailyStats({ date, until = false, statuses, latestStatusBe
 
       const previousStatus = statusesInBetween[i - 1]
       if (previousStatus) {
-        hourOnlineMs += status.createdAt.getTime() - previousStatus.createdAt.getTime()
+        hourOnlineMs +=
+          status.createdAt.getTime() - previousStatus.createdAt.getTime()
       } else if (startedOnline) {
         hourOnlineMs += status.createdAt.getTime() - minDate.getTime()
       }
@@ -44,19 +64,29 @@ export function gatherDailyStats({ date, until = false, statuses, latestStatusBe
       hourOnlineMs = 60 * 60_000
     }
 
-    if (statusesInBetween.length > 0) {
-      const lastStatus = statusesInBetween[statusesInBetween.length - 1]
-      if (lastStatus.isOnline) {
-        hourOnlineMs += maxDate.getTime() - lastStatus.createdAt.getTime()
+    let hourStartMs = 0
+    let hourEndMs = 60 * 60_000
+
+    if (!startingStatusDate || hour < startingStatusDate.getHours()) {
+      hourStartMs = 60 * 60_000
+    } else if (startingStatusDate && hour === startingStatusDate.getHours()) {
+      hourStartMs = toWithinHourMs(startingStatusDate)
+    }
+
+    if (until) {
+      if (hour === date.getHours()) {
+        hourEndMs = toWithinHourMs(date)
+      } else if (hour > date.getHours()) {
+        hourEndMs = 0
       }
     }
 
-    let hourTotalMs = 60 * 60_000
-    if (until) {
-      if (hour === date.getHours()) {
-        hourTotalMs = date.getMinutes() * 60_000 + date.getSeconds() * 1000 + date.getMilliseconds()
-      } else if (hour > date.getHours()) {
-        hourTotalMs = 0
+    const hourTotalMs = Math.max(0, hourEndMs - hourStartMs)
+
+    if (statusesInBetween.length > 0) {
+      const lastStatus = statusesInBetween[statusesInBetween.length - 1]
+      if (lastStatus.isOnline) {
+        hourOnlineMs += hourEndMs - toWithinHourMs(lastStatus.createdAt)
       }
     }
 
@@ -72,4 +102,8 @@ export function gatherDailyStats({ date, until = false, statuses, latestStatusBe
     onlineMs,
     totalMs,
   }
+}
+
+function toWithinHourMs(date) {
+  return date.getMinutes() * 60_000 + date.getSeconds() * 1000 + date.getMilliseconds()
 }
