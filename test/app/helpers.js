@@ -9,6 +9,6 @@ export function createStatus(isOnline, time, date = '2020-01-02') {
   })
 }
 
-export function createLastStatusBefore(isOnline) {
-  return createStatus(isOnline, '23:00', '2020-01-01')
+export function createLastStatusBefore(isOnline, time = '23:00') {
+  return createStatus(isOnline, time, '2020-01-01')
 }
