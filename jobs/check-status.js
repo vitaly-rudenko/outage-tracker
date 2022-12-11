@@ -5,7 +5,6 @@ import { country, databaseUrl, password, username } from '../env.js'
 import { logger } from '../logger.js'
 
 async function run() {
-  logger.info({}, 'Running status check')
   logger.info({}, 'Connecting to Postgres')
 
   const pgClient = new pg.Client(databaseUrl)
@@ -17,9 +16,6 @@ async function run() {
     password,
     username,
   })
-
-  logger.info({}, 'Initializing status checker')
-  await statusChecker.init()
 
   logger.info({}, 'Fetching current status')
   let status = await statusChecker.check()
@@ -33,7 +29,7 @@ async function run() {
   }
 
   logger.info({}, 'Storing the status')
-  const storedStatus = await statusStorage.storeStatus(status)
+  await statusStorage.storeStatus(status)
 }
 
 run()
