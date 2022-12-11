@@ -16,10 +16,15 @@ import { TelegramErrorLogger } from './app/TelegramErrorLogger.js'
 import { versionCommand } from './app/flows/version.js'
 import { MiHomeStatusChecker } from './app/MiHomeStatusChecker.js'
 import { StatusPostgresStorage } from './app/StatusPostgresStorage.js'
-import { condenseStatuses } from './app/condenseStatuses.js'
 import { gatherDailyStats } from './app/gatherDailyStats.js'
 import { formatDailyStats } from './app/formatDailyStats.js'
 import { formatTime } from './app/formatTime.js'
+import { gatherWeeklyStats } from './app/gatherWeeklyStats.js'
+import { formatWeeklyStats } from './app/formatWeeklyStats.js'
+
+const maxDurationMs = 10 * 60_000
+const aggregateHours = 2
+const days = 7
 
 async function start() {
   const statusChecker = new MiHomeStatusChecker({
@@ -66,41 +71,80 @@ async function start() {
   })
 
   bot.command('version', versionCommand())
+
   bot.command('now', async (context) => {
-    const latestStatus = await statusStorage.getLatestStatus()
+    const latestStatusChange = await statusStorage.getLatestStatusChange()
     const currentStatus = await statusChecker.check()
 
-    if (!latestStatus || latestStatus.isOnline !== currentStatus.isOnline) {
+    if (
+      !latestStatusChange ||
+      latestStatusChange.isOnline !== currentStatus.isOnline
+    ) {
       await statusStorage.storeStatus(currentStatus)
 
       if (currentStatus.isOnline) {
-        await context.reply('✅ Світло нещодавно зʼявилось')
+        await context.reply('✅ Тепер онлайн')
       } else {
-        await context.reply('❌ Світло нещодавно зникло')
+        await context.reply('❌ Тепер офлайн')
       }
     } else {
-      const time = currentStatus.createdAt.getTime() - latestStatus.createdAt.getTime()
+      const time =
+        currentStatus.createdAt.getTime() -
+        latestStatusChange.createdAt.getTime()
 
       if (currentStatus.isOnline) {
-        await context.reply(`✅ Світло є вже ${formatTime(time)} годин`)
+        await context.reply(`✅ Онлайн вже ${formatTime(time)}`)
       } else {
-        await context.reply(`❌ Світла немає вже ${formatTime(time)} годин`)
+        await context.reply(`❌ Офлайн ${formatTime(time)}`)
       }
     }
   })
 
   bot.command('today', async (context) => {
-    const date = new Date()
-    const dailyStatuses = await statusStorage.getDailyStatuses({ date })
-    const latestStatusBefore = await statusStorage.getLatestStatusBeforeDate({ date })
+    await statusStorage.storeStatus(await statusChecker.check())
 
-    const statuses = condenseStatuses(dailyStatuses)
-    const dailyStats = gatherDailyStats({ date, until: true, statuses, latestStatusBefore })
+    const date = new Date()
+    const statuses = await statusStorage.getDailyStatuses({ date })
+    const latestStatusBefore = await statusStorage.getLatestStatusBeforeDate({
+      date,
+    })
+
+    const dailyStats = gatherDailyStats({
+      date,
+      until: true,
+      statuses,
+      latestStatusBefore,
+      maxDurationMs,
+    })
 
     await context.reply(
-      formatDailyStats({ date, dailyStats, aggregateHours: 2 }),
+      formatDailyStats({ date, dailyStats, aggregateHours }),
       { parse_mode: 'MarkdownV2' }
     )
+  })
+
+  bot.command('week', async (context) => {
+    await statusStorage.storeStatus(await statusChecker.check())
+
+    const date = new Date()
+    const statuses = await statusStorage.getWeeklyStatuses({ date, days })
+    const latestStatusBefore = await statusStorage.getLatestStatusBeforeWeek({
+      date,
+      days,
+    })
+
+    const weeklyStats = gatherWeeklyStats({
+      date,
+      days,
+      until: true,
+      statuses,
+      latestStatusBefore,
+      maxDurationMs,
+    })
+
+    await context.reply(formatWeeklyStats({ weeklyStats, aggregateHours }), {
+      parse_mode: 'MarkdownV2',
+    })
   })
 
   bot.catch((error) => errorLogger.log(error))

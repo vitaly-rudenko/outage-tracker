@@ -10,7 +10,8 @@ export class StatusPostgresStorage {
   /** @param {Status} status */
   async storeStatus(status) {
     try {
-      const response = await this._client.query(`
+      const response = await this._client.query(
+        `
         INSERT INTO status (is_online, raw, created_at)
         VALUES ($1, $2, $3)
         RETURNING id;
@@ -32,13 +33,57 @@ export class StatusPostgresStorage {
     }
   }
 
-  async getLatestStatus() {
-    const results = await this._find({ limit: 1, sort: 'descending' })
-    return results[0]
+  async getLatestStatusChange() {
+    const [latestStatus] = await this._find({ limit: 1, sort: 'descending' })
+    if (!latestStatus) return undefined
+
+    const [latestStatusDifferent] = await this._find({
+      isOnline: !latestStatus.isOnline,
+      limit: 1,
+      sort: 'descending',
+    })
+
+    if (!latestStatusDifferent) {
+      const [firstStatus] = await this._find({
+        isOnline: latestStatus.isOnline,
+        limit: 1,
+        sort: 'ascending',
+      })
+      return firstStatus
+    }
+
+    const [firstStatus] = await this._find({
+      isOnline: latestStatus.isOnline,
+      minDate: latestStatusDifferent.createdAt,
+      limit: 1,
+      sort: 'ascending',
+    })
+
+    return firstStatus
   }
 
   async getDailyStatuses({ date }) {
     const minDate = new Date(date)
+    minDate.setHours(0)
+    minDate.setMinutes(0)
+    minDate.setMilliseconds(0)
+
+    const maxDate = new Date(date)
+    maxDate.setDate(date.getDate() + 1)
+    maxDate.setHours(0)
+    maxDate.setMinutes(0)
+    maxDate.setMilliseconds(0)
+
+    return this._find({
+      minDate,
+      maxDate,
+      sort: 'ascending',
+    })
+  }
+
+  async getWeeklyStatuses({ date, days }) {
+    const minDate = new Date(date)
+    minDate.setDate(date.getDate() - days)
     minDate.setHours(0)
     minDate.setMinutes(0)
     minDate.setMilliseconds(0)
@@ -71,6 +116,22 @@ export class StatusPostgresStorage {
     return results[0]
   }
 
+  async getLatestStatusBeforeWeek({ date, days }) {
+    const maxDate = new Date(date)
+    maxDate.setDate(date.getDate() - days)
+    maxDate.setHours(0)
+    maxDate.setMinutes(0)
+    maxDate.setMilliseconds(0)
+
+    const results = await this._find({
+      maxDate,
+      limit: 1,
+      sort: 'descending',
+    })
+
+    return results[0]
+  }
+
   /** @param {string} id */
   async findById(id) {
     const results = await this._find({ ids: [id], limit: 1 })
@@ -80,6 +141,7 @@ export class StatusPostgresStorage {
   /**
    * @param {{
    *   ids?: string[],
+   *   isOnline?: boolean,
    *   minDate?: Date,
    *   maxDate?: Date,
    *   limit?: number,
@@ -87,7 +149,7 @@ export class StatusPostgresStorage {
    *   sort?: 'ascending' | 'descending'
    * }} options
    */
-  async _find({ ids, minDate, maxDate, limit, offset, sort } = {}) {
+  async _find({ ids, isOnline, minDate, maxDate, limit, offset, sort } = {}) {
     const conditions = []
     const variables = []
 
@@ -102,6 +164,11 @@ export class StatusPostgresStorage {
           .join(', ')})`
       )
       variables.push(...ids)
+    }
+
+    if (isOnline !== undefined) {
+      variables.push(isOnline)
+      conditions.push(`s.is_online = $${variables.length}`)
     }
 
     if (minDate) {

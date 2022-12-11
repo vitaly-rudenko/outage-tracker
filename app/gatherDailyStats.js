@@ -1,3 +1,5 @@
+import { getStartOfTheDay } from './getStartOfTheDay.js'
+
 export function gatherDailyStats({
   date,
   until = false,
@@ -77,15 +79,6 @@ export function gatherDailyStats({
     onlineMs,
     totalMs,
   }
-}
-
-function getStartOfTheDay(date) {
-  const updateDate = new Date(date)
-  updateDate.setHours(0)
-  updateDate.setMinutes(0)
-  updateDate.setSeconds(0)
-  updateDate.setMilliseconds(0)
-  return updateDate
 }
 
 function time(dateOrStatus) {

@@ -7,21 +7,23 @@ export function formatDailyStats({ date, dailyStats, aggregateHours }) {
   let message = ''
 
   message += `Статистика за *${escapeMd(formatDate(date))}*:\n`
-  message += `✅ Онлайн: ${formatTime(onlineMs)} годин\n`
-  message += `❌ Офлайн: ${formatTime(totalMs - onlineMs)} годин\n`
+  message += `✅ Онлайн: ${formatTime(onlineMs)}\n`
+  message += `❌ Офлайн: ${formatTime(totalMs - onlineMs)}\n`
   message += '\n'
   message += '```\n'
 
-  for (let i = 0; i < 24; i += aggregateHours) {
+  for (let i = 0; i < perHour.length; i += aggregateHours) {
     const startHour = i
-    const endHour = i + aggregateHours - 1
+    const endHour = startHour + aggregateHours - 1
 
     const hours = perHour.filter(p => p.hour >= startHour && p.hour <= endHour)
     const hoursOnlineMs = hours.map(h => h.onlineMs).reduce((a, b) => a + b, 0)
     const hoursTotalMs = hours.map(h => h.totalMs).reduce((a, b) => a + b, 0)
 
+    const time = `${String(startHour).padStart(2, '0')}:00 - ${String(endHour).padStart(2, '0')}:59`
+
     if (hoursTotalMs === 0) {
-      message += `⬜ ${String(startHour).padStart(2, '0')}:00 - ${String(endHour).padStart(2, '0')}:59\n`
+      message += `⬜ ${time}\n`
       continue
     }
 
@@ -36,7 +38,7 @@ export function formatDailyStats({ date, dailyStats, aggregateHours }) {
       icon = '🟧'
     }
 
-    message += `${icon} ${String(startHour).padStart(2, '0')}:00 - ${String(endHour).padStart(2, '0')}:59 | ${Math.round(percentage * 100)}%\n`
+    message += `${icon} ${time} | ${Math.round(percentage * 100)}%\n`
   }
 
   message += '```'
