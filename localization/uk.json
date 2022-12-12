@@ -1,0 +1,41 @@
+{
+  "commands": {
+    "now": "Поточний статус",
+    "today": "Статистика за сьогодні",
+    "week": "Статистика за останні 7 днів",
+    "start": "Розпочати роботу з ботом",
+    "version": "Версія"
+  },
+  "now": {
+    "becameOnline": "✅ Тепер онлайн",
+    "becameOffline": "❌ Тепер офлайн",
+    "stillOnline": "✅ Онлайн вже {duration}",
+    "stillOffline": "❌ Офлайн вже {duration}"
+  },
+  "daily": {
+    "message": [
+      "Статистика за *{date}*:",
+      "✅ Онлайн: *{onlineDuration}*",
+      "❌ Офлайн: *{offlineDuration}*",
+      "",
+      "```",
+      "{hours}",
+      "```"
+    ],
+    "hour": "{icon} {time}",
+    "hourWithPercentage": "{icon} {time} | {percentage}%"
+  },
+  "weekly": {
+    "message": [
+      "Статистика за *{days} днів*:",
+      "✅ Онлайн: *{onlineDuration}*",
+      "❌ Офлайн: *{offlineDuration}*",
+      "",
+      "```",
+      "{lines}",
+      "```"
+    ],
+    "line": "{icons} {time}",
+    "lineWithPercentage": "{icons} {time} | {percentage}%"
+  }
+}

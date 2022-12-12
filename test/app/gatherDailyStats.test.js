@@ -87,7 +87,7 @@ describe('gatherDailyStats()', () => {
       gatherDailyStats({
         date: today,
         statuses: [],
-        latestStatusBefore: null
+        latestStatusBefore: undefined
       })
     ).toEqual({
       onlineMs: 0, totalMs: 0,
@@ -163,14 +163,14 @@ describe('gatherDailyStats()', () => {
     })
   })
 
-  it('should gather daily stats (simple, before: null)', () => {
+  it('should gather daily stats (simple, before: undefined)', () => {
     expect(
       gatherDailyStats({
         date: today,
         statuses: [
           createStatus(true, '4:40'),
         ],
-        latestStatusBefore: null
+        latestStatusBefore: undefined
       })
     ).toEqual({
       onlineMs: 69600000, totalMs: 69600000,
@@ -434,7 +434,7 @@ describe('gatherDailyStats()', () => {
 
   })
 
-  it('should gather daily stats (complex, until, before: null)', () => {
+  it('should gather daily stats (complex, until, before: undefined)', () => {
     const date = new Date(today)
     date.setHours(17)
     date.setMinutes(50)
@@ -448,7 +448,7 @@ describe('gatherDailyStats()', () => {
           createStatus(false,  '17:20'),
           createStatus(true,  '17:30'),
         ],
-        latestStatusBefore: null,
+        latestStatusBefore: undefined,
       })
     ).toEqual({
       onlineMs: 1500000, totalMs: 2100000,

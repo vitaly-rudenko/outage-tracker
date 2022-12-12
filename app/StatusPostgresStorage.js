@@ -18,7 +18,7 @@ export class StatusPostgresStorage {
       `,
         [
           status.isOnline,
-          status.raw ? JSON.stringify(status.raw) : null,
+          status.raw ? JSON.stringify(status.raw) : undefined,
           status.createdAt,
         ]
       )

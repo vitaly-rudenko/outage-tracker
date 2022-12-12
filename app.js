@@ -21,12 +21,16 @@ import { formatDailyStats } from './app/formatDailyStats.js'
 import { formatTime } from './app/formatTime.js'
 import { gatherWeeklyStats } from './app/gatherWeeklyStats.js'
 import { formatWeeklyStats } from './app/formatWeeklyStats.js'
+import { withLocalization } from './app/localization/middlewares/localization.js'
+import { withLanguage } from './app/localization/localize.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
 const days = 7
 
 async function start() {
+  const localize = withLanguage('uk')
+
   const statusChecker = new MiHomeStatusChecker({
     country,
     password,
@@ -49,10 +53,11 @@ async function start() {
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
   bot.telegram.setMyCommands([
-    { command: 'now', description: 'Get current status' },
-    { command: 'today', description: 'Get daily stats' },
-    { command: 'start', description: 'Start' },
-    { command: 'version', description: 'Version' },
+    { command: 'now', description: localize('uk', 'commands.now') },
+    { command: 'today', description: localize('uk', 'commands.today') },
+    { command: 'week', description: localize('uk', 'commands.week') },
+    { command: 'start', description: localize('uk', 'commands.start') },
+    { command: 'version', description: localize('uk', 'commands.version') },
   ])
 
   process.on('unhandledRejection', (error) => {
@@ -66,6 +71,8 @@ async function start() {
     })
   }
 
+  bot.use(withLocalization())
+
   bot.start(async (context) => {
     await context.reply('Hello!')
   })
@@ -73,6 +80,8 @@ async function start() {
   bot.command('version', versionCommand())
 
   bot.command('now', async (context) => {
+    const { localize } = context.state
+
     const latestStatusChange = await statusStorage.getLatestStatusChange()
     const currentStatus = await statusChecker.check()
 
@@ -83,9 +92,9 @@ async function start() {
       await statusStorage.storeStatus(currentStatus)
 
       if (currentStatus.isOnline) {
-        await context.reply('✅ Тепер онлайн')
+        await context.reply(localize('now.becameOnline'))
       } else {
-        await context.reply('❌ Тепер офлайн')
+        await context.reply(localize('now.becameOffline'))
       }
     } else {
       const time =
@@ -93,14 +102,20 @@ async function start() {
         latestStatusChange.createdAt.getTime()
 
       if (currentStatus.isOnline) {
-        await context.reply(`✅ Онлайн вже ${formatTime(time)}`)
+        await context.reply(
+          localize('now.stillOnline', { duration: formatTime(time) })
+        )
       } else {
-        await context.reply(`❌ Офлайн ${formatTime(time)}`)
+        await context.reply(
+          localize('now.stillOffline', { duration: formatTime(time) })
+        )
       }
     }
   })
 
   bot.command('today', async (context) => {
+    const { localize } = context.state
+
     await statusStorage.storeStatus(await statusChecker.check())
 
     const date = new Date()
@@ -118,7 +133,7 @@ async function start() {
     })
 
     await context.reply(
-      formatDailyStats({ date, dailyStats, aggregateHours }),
+      formatDailyStats({ date, dailyStats, aggregateHours, localize }),
       { parse_mode: 'MarkdownV2' }
     )
   })
@@ -181,7 +196,7 @@ async function start() {
   const port = Number(process.env.PORT) || 3001
 
   logger.info({}, 'Starting Express app')
-  await new Promise((resolve) => app.listen(port, () => resolve()))
+  await new Promise((resolve) => app.listen(port, () => resolve(undefined)))
 
   try {
     logger.info({}, 'Removing existing webhook')

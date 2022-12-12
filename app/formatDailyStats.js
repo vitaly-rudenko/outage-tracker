@@ -1,51 +1,70 @@
 import { escapeMd } from './escapeMd.js'
 import { formatTime } from './formatTime.js'
 
-export function formatDailyStats({ date, dailyStats, aggregateHours }) {
+export function formatDailyStats({
+  date,
+  dailyStats,
+  aggregateHours,
+  localize,
+}) {
   const { totalMs, onlineMs, perHour } = dailyStats
 
-  let message = ''
+  return localize('daily.message', {
+    date: escapeMd(formatDate(date)),
+    onlineDuration: escapeMd(formatTime(onlineMs)),
+    offlineDuration: escapeMd(formatTime(totalMs - onlineMs)),
+    hours: Array.from(
+      new Array(Math.floor(perHour.length / aggregateHours)),
+      (_, i) => {
+        const startHour = i * aggregateHours
+        const endHour = startHour + aggregateHours - 1
 
-  message += `Статистика за *${escapeMd(formatDate(date))}*:\n`
-  message += `✅ Онлайн: ${formatTime(onlineMs)}\n`
-  message += `❌ Офлайн: ${formatTime(totalMs - onlineMs)}\n`
-  message += '\n'
-  message += '```\n'
+        const hours = perHour.filter(
+          (p) => p.hour >= startHour && p.hour <= endHour
+        )
+        const hoursOnlineMs = hours
+          .map((h) => h.onlineMs)
+          .reduce((a, b) => a + b, 0)
+        const hoursTotalMs = hours
+          .map((h) => h.totalMs)
+          .reduce((a, b) => a + b, 0)
 
-  for (let i = 0; i < perHour.length; i += aggregateHours) {
-    const startHour = i
-    const endHour = startHour + aggregateHours - 1
+        const time = formatHours(startHour, endHour)
 
-    const hours = perHour.filter(p => p.hour >= startHour && p.hour <= endHour)
-    const hoursOnlineMs = hours.map(h => h.onlineMs).reduce((a, b) => a + b, 0)
-    const hoursTotalMs = hours.map(h => h.totalMs).reduce((a, b) => a + b, 0)
+        if (hoursTotalMs === 0) {
+          return localize('daily.hour', { icon: '⬜', time })
+        }
 
-    const time = `${String(startHour).padStart(2, '0')}:00 - ${String(endHour).padStart(2, '0')}:59`
+        const percentage = hoursOnlineMs / hoursTotalMs
 
-    if (hoursTotalMs === 0) {
-      message += `⬜ ${time}\n`
-      continue
-    }
+        let icon = '🟥'
+        if (percentage >= 0.95) {
+          icon = '🟩'
+        } else if (percentage >= 0.5) {
+          icon = '🟨'
+        } else if (percentage >= 0.05) {
+          icon = '🟧'
+        }
 
-    const percentage = hoursOnlineMs / hoursTotalMs
-
-    let icon = '🟥'
-    if (percentage >= 0.95) {
-      icon = '🟩'
-    } else if (percentage >= 0.5) {
-      icon = '🟨'
-    } else if (percentage >= 0.05) {
-      icon = '🟧'
-    }
-
-    message += `${icon} ${time} | ${Math.round(percentage * 100)}%\n`
-  }
-
-  message += '```'
-
-  return message
+        return localize('daily.hourWithPercentage', {
+          icon,
+          time,
+          percentage: Math.floor(percentage * 100),
+        })
+      }
+    ).join('\n'),
+  })
 }
 
 function formatDate(date) {
-  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`
+  return `${String(date.getDate()).padStart(2, '0')}.${String(
+    date.getMonth() + 1
+  ).padStart(2, '0')}.${date.getFullYear()}`
+}
+
+function formatHours(from, to) {
+  return `${String(from).padStart(2, '0')}:00–${String(to).padStart(
+    2,
+    '0'
+  )}:59`
 }
