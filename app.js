@@ -23,13 +23,14 @@ import { gatherWeeklyStats } from './app/gatherWeeklyStats.js'
 import { formatWeeklyStats } from './app/formatWeeklyStats.js'
 import { withLocalization } from './app/localization/middlewares/localization.js'
 import { withLanguage } from './app/localization/localize.js'
+import { escapeMd } from './app/escapeMd.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
 const days = 7
 
 async function start() {
-  const localize = withLanguage('uk')
+  const localizeDefault = withLanguage('uk')
 
   const statusChecker = new MiHomeStatusChecker({
     country,
@@ -53,11 +54,11 @@ async function start() {
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
   bot.telegram.setMyCommands([
-    { command: 'now', description: localize('uk', 'commands.now') },
-    { command: 'today', description: localize('uk', 'commands.today') },
-    { command: 'week', description: localize('uk', 'commands.week') },
-    { command: 'start', description: localize('uk', 'commands.start') },
-    { command: 'version', description: localize('uk', 'commands.version') },
+    { command: 'now', description: localizeDefault('commands.now') },
+    { command: 'today', description: localizeDefault('commands.today') },
+    { command: 'week', description: localizeDefault('commands.week') },
+    { command: 'start', description: localizeDefault('commands.start') },
+    { command: 'version', description: localizeDefault('commands.version') },
   ])
 
   process.on('unhandledRejection', (error) => {
@@ -82,39 +83,48 @@ async function start() {
   bot.command('now', async (context) => {
     const { localize } = context.state
 
+    const message = await context.reply(localize('fetchingStatus'), {
+      parse_mode: 'MarkdownV2',
+    })
+
     const latestStatusChange = await statusStorage.getLatestStatusChange()
     const currentStatus = await statusChecker.check()
 
+    let replyText
     if (
       !latestStatusChange ||
       latestStatusChange.isOnline !== currentStatus.isOnline
     ) {
       await statusStorage.storeStatus(currentStatus)
 
-      if (currentStatus.isOnline) {
-        await context.reply(localize('now.becameOnline'))
-      } else {
-        await context.reply(localize('now.becameOffline'))
-      }
+      replyText = currentStatus.isOnline
+        ? localize('now.becameOnline')
+        : localize('now.becameOffline')
     } else {
       const time =
         currentStatus.createdAt.getTime() -
         latestStatusChange.createdAt.getTime()
 
-      if (currentStatus.isOnline) {
-        await context.reply(
-          localize('now.stillOnline', { duration: formatTime(time) })
-        )
-      } else {
-        await context.reply(
-          localize('now.stillOffline', { duration: formatTime(time) })
-        )
-      }
+      replyText = currentStatus.isOnline
+        ? localize('now.stillOnline', { duration: escapeMd(formatTime(time)) })
+        : localize('now.stillOffline', { duration: escapeMd(formatTime(time)) })
     }
+
+    await bot.telegram.editMessageText(
+      message.chat.id,
+      message.message_id,
+      undefined,
+      replyText,
+      { parse_mode: 'MarkdownV2' }
+    )
   })
 
   bot.command('today', async (context) => {
     const { localize } = context.state
+
+    const message = await context.reply(localize('fetchingStatus'), {
+      parse_mode: 'MarkdownV2',
+    })
 
     await statusStorage.storeStatus(await statusChecker.check())
 
@@ -132,13 +142,22 @@ async function start() {
       maxDurationMs,
     })
 
-    await context.reply(
+    await bot.telegram.editMessageText(
+      message.chat.id,
+      message.message_id,
+      undefined,
       formatDailyStats({ date, dailyStats, aggregateHours, localize }),
       { parse_mode: 'MarkdownV2' }
     )
   })
 
   bot.command('week', async (context) => {
+    const { localize } = context.state
+
+    const message = await context.reply(localize('fetchingStatus'), {
+      parse_mode: 'MarkdownV2',
+    })
+
     await statusStorage.storeStatus(await statusChecker.check())
 
     const date = new Date()
@@ -157,9 +176,13 @@ async function start() {
       maxDurationMs,
     })
 
-    await context.reply(formatWeeklyStats({ weeklyStats, aggregateHours }), {
-      parse_mode: 'MarkdownV2',
-    })
+    await bot.telegram.editMessageText(
+      message.chat.id,
+      message.message_id,
+      undefined,
+      formatWeeklyStats({ weeklyStats, aggregateHours, localize }),
+      { parse_mode: 'MarkdownV2' }
+    )
   })
 
   bot.catch((error) => errorLogger.log(error))
