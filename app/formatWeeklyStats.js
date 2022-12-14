@@ -4,11 +4,11 @@ import { formatTime } from './formatTime.js'
 export function formatWeeklyStats({ weeklyStats, aggregateHours, localize }) {
   const { totalMs, onlineMs, perDay } = weeklyStats
 
-  return localize('daily.message', {
+  return localize('weekly.message', {
     days: perDay.length,
     onlineDuration: escapeMd(formatTime(onlineMs)),
     offlineDuration: escapeMd(formatTime(totalMs - onlineMs)),
-    hours: Array.from(
+    lines: Array.from(
       new Array(
         Math.floor(perDay[0].dailyStats.perHour.length / aggregateHours)
       ),
@@ -54,9 +54,7 @@ export function formatWeeklyStats({ weeklyStats, aggregateHours, localize }) {
         }
 
         const linePercentage = lineOnlineMs / lineTotalMs
-        const time = `${String(startHour).padStart(2, '0')}:00 - ${String(
-          endHour
-        ).padStart(2, '0')}:59`
+        const time = `${String(startHour).padStart(2, '0')}:00`
 
         return lineTotalMs > 0
           ? localize('weekly.lineWithPercentage', { icons, time, percentage: Math.floor(linePercentage * 100) })
@@ -64,8 +62,4 @@ export function formatWeeklyStats({ weeklyStats, aggregateHours, localize }) {
       }
     ).join('\n'),
   })
-}
-
-function formatHours(from, to) {
-  return `${String(from).padStart(2, '0')}:00–${String(to).padStart(2, '0')}:59`
 }
