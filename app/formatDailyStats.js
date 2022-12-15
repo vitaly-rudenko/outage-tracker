@@ -1,3 +1,4 @@
+import { getAggregatedIcon } from './getAggregatedIcon.js'
 import { formatDuration } from './utils/date.js'
 import { escapeMd } from './utils/escapeMd.js'
 
@@ -30,22 +31,13 @@ export function formatDailyStats({
           .reduce((a, b) => a + b, 0)
 
         const time = formatHours(startHour, endHour)
+        const icon = getAggregatedIcon({ onlineMs: hoursOnlineMs, totalMs: hoursTotalMs })
 
         if (hoursTotalMs === 0) {
-          return localize('daily.hour', { icon: '⬜', time })
+          return localize('daily.hour', { icon, time })
         }
 
         const percentage = hoursOnlineMs / hoursTotalMs
-
-        let icon = '🟥'
-        if (percentage >= 0.95) {
-          icon = '🟩'
-        } else if (percentage >= 0.5) {
-          icon = '🟨'
-        } else if (percentage >= 0.05) {
-          icon = '🟧'
-        }
-
         return localize('daily.hourWithPercentage', {
           icon,
           time,

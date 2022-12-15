@@ -1,3 +1,4 @@
+import { getAggregatedIcon } from './getAggregatedIcon.js'
 import { formatDuration } from './utils/date.js'
 import { escapeMd } from './utils/escapeMd.js'
 
@@ -35,22 +36,10 @@ export function formatWeeklyStats({ weeklyStats, aggregateHours, localize }) {
             .map((h) => h.totalMs)
             .reduce((a, b) => a + b, 0)
 
-          const hourPercentage = hoursOnlineMs / hoursTotalMs
           lineTotalMs += hoursTotalMs
           lineOnlineMs += hoursOnlineMs
 
-          let icon = '🟥'
-          if (hoursTotalMs === 0) {
-            icon = '⬜'
-          } else if (hourPercentage >= 0.95) {
-            icon = '🟩'
-          } else if (hourPercentage >= 0.5) {
-            icon = '🟨'
-          } else if (hourPercentage >= 0.05) {
-            icon = '🟧'
-          }
-
-          icons += icon
+          icons += getAggregatedIcon({ onlineMs: hoursOnlineMs, totalMs: hoursTotalMs })
         }
 
         const linePercentage = lineOnlineMs / lineTotalMs
