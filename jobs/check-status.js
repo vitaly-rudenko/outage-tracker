@@ -3,7 +3,7 @@ import { Telegraf } from 'telegraf'
 import { withLanguage } from '../app/localize.js'
 import { MiHomeStatusChecker } from '../app/status/MiHomeStatusChecker.js'
 import { StatusPostgresStorage } from '../app/status/StatusPostgresStorage.js'
-import { formatDuration } from '../app/utils/dateUtils.js'
+import { formatDuration } from '../app/utils/date.js'
 import { escapeMd } from '../app/utils/escapeMd.js'
 import {
   chatId,
@@ -51,8 +51,7 @@ async function run() {
   logger.info({}, 'Storing the current status')
   await statusStorage.createStatus(status)
 
-  console.log({ status, latestStatusFirstChange })
-
+  // TODO: perhaps only use latestStatusFirstChange if it was recent enough
   logger.info({}, 'Sending the message to the chat if necessary')
   if (latestStatusFirstChange) {
     if (latestStatusFirstChange.isOnline !== status.isOnline) {
@@ -65,6 +64,11 @@ async function run() {
         })
       )
 
+      logger.info(
+        { status, latestStatusFirstChange, latestStatusDurationMs },
+        'Status has been changed since the last time'
+      )
+
       await bot.telegram.sendMessage(
         chatId,
         status.isOnline
@@ -74,6 +78,7 @@ async function run() {
       )
     }
   } else {
+    logger.info({ status }, 'New status has been retrieved')
     await bot.telegram.sendMessage(
       chatId,
       status.isOnline
@@ -90,6 +95,6 @@ run()
     process.exit(0)
   })
   .catch((error) => {
-    console.error(error)
+    logger.error(error, 'Unhandled error')
     process.exit(1)
   })

@@ -108,12 +108,12 @@ class MigrationsCli {
   async generate(migrationName) {
     const date = new Date()
     const timestamp = [
-      date.getUTCFullYear(),
-      this._format(date.getUTCMonth() + 1),
-      this._format(date.getUTCDate()),
-      this._format(date.getUTCHours()),
-      this._format(date.getUTCMinutes()),
-      this._format(date.getUTCSeconds())
+      date.getFullYear(),
+      this._format(date.getMonth() + 1),
+      this._format(date.getDate()),
+      this._format(date.getHours()),
+      this._format(date.getMinutes()),
+      this._format(date.getSeconds())
     ].join('')
 
     const migrationFileName = `${timestamp}-${migrationName}.cjs`

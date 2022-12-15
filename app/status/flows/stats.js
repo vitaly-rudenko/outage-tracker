@@ -1,4 +1,8 @@
 import { getStartOfTheDay, getTomorrowDate, getOffsetDate } from '../../utils/date.js'
+import { formatDailyStats } from '../../formatDailyStats.js'
+import { formatWeeklyStats } from '../../formatWeeklyStats.js'
+import { gatherDailyStats } from '../../gatherDailyStats.js'
+import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
@@ -21,7 +25,8 @@ export function todayCommand({ bot, statusChecker, statusStorage }) {
 
     await statusStorage.createStatus(await statusChecker.check())
 
-    const today = getStartOfTheDay(new Date())
+    const now = new Date()
+    const today = getStartOfTheDay(now)
     const tomorrow = getTomorrowDate(today)
     const latestStatusBefore = await statusStorage.findLatestStatusBefore(today)
     const statuses = await statusStorage.findStatusesBetween({
@@ -30,7 +35,7 @@ export function todayCommand({ bot, statusChecker, statusStorage }) {
     })
 
     const dailyStats = gatherDailyStats({
-      date: today,
+      date: now,
       until: true,
       statuses,
       latestStatusBefore,
@@ -64,7 +69,8 @@ export function weekCommand({ bot, statusChecker, statusStorage }) {
 
     await statusStorage.createStatus(await statusChecker.check())
 
-    const today = getStartOfTheDay(new Date())
+    const now = new Date()
+    const today = getStartOfTheDay(now)
     const tomorrow = getTomorrowDate(today)
     const startOfTheWeek = getOffsetDate(today, -weeklyDays)
 
@@ -78,7 +84,7 @@ export function weekCommand({ bot, statusChecker, statusStorage }) {
     )
 
     const weeklyStats = gatherWeeklyStats({
-      date: today,
+      date: now,
       days: weeklyDays,
       until: true,
       statuses,

@@ -11,7 +11,9 @@ describe('gatherDailyStats()', () => {
       gatherDailyStats({
         date: today,
         statuses: [],
-        latestStatusBefore: createLastStatusBefore(true)
+        latestStatusBefore: createLastStatusBefore(true),
+        maxDurationMs: Infinity,
+        until: false,
       })
     ).toEqual({
       onlineMs: 86400000, totalMs: 86400000,
@@ -49,7 +51,9 @@ describe('gatherDailyStats()', () => {
       gatherDailyStats({
         date: today,
         statuses: [],
-        latestStatusBefore: createLastStatusBefore(false)
+        latestStatusBefore: createLastStatusBefore(false),
+        maxDurationMs: Infinity,
+        until: false,
       })
     ).toEqual({
       onlineMs: 0, totalMs: 86400000,
@@ -87,7 +91,9 @@ describe('gatherDailyStats()', () => {
       gatherDailyStats({
         date: today,
         statuses: [],
-        latestStatusBefore: undefined
+        latestStatusBefore: undefined,
+        maxDurationMs: Infinity,
+        until: false,
       })
     ).toEqual({
       onlineMs: 0, totalMs: 0,
@@ -130,7 +136,8 @@ describe('gatherDailyStats()', () => {
         date,
         until: true,
         statuses: [],
-        latestStatusBefore: createLastStatusBefore(true)
+        latestStatusBefore: createLastStatusBefore(true),
+        maxDurationMs: Infinity,
       })
     ).toEqual({
       onlineMs: min(14 * 60 + 15), totalMs: min(14 * 60 + 15),
@@ -170,7 +177,9 @@ describe('gatherDailyStats()', () => {
         statuses: [
           createStatus(true, '4:40'),
         ],
-        latestStatusBefore: undefined
+        latestStatusBefore: undefined,
+        maxDurationMs: Infinity,
+        until: false,
       })
     ).toEqual({
       onlineMs: 69600000, totalMs: 69600000,
@@ -210,7 +219,9 @@ describe('gatherDailyStats()', () => {
         statuses: [
           createStatus(false, '4:40'),
         ],
-        latestStatusBefore: createLastStatusBefore(true)
+        latestStatusBefore: createLastStatusBefore(true),
+        maxDurationMs: Infinity,
+        until: false,
       })
     ).toEqual({
       onlineMs: 16800000, totalMs: 86400000,
@@ -264,6 +275,7 @@ describe('gatherDailyStats()', () => {
         ],
         latestStatusBefore: createLastStatusBefore(true, '23:56'),
         maxDurationMs: 5 * 60_000,
+        until: false,
       })
     ).toEqual({
       onlineMs: min(34), totalMs: min(56),
@@ -308,6 +320,7 @@ describe('gatherDailyStats()', () => {
         ],
         latestStatusBefore: createLastStatusBefore(true, '23:30'),
         maxDurationMs: 75 * 60_000,
+        until: false,
       })
     ).toEqual({
       onlineMs: min(190), totalMs: min(265),
@@ -352,7 +365,9 @@ describe('gatherDailyStats()', () => {
           createStatus(true,  '17:55'),
           createStatus(false, '22:05'),
         ],
-        latestStatusBefore: createLastStatusBefore(false)
+        latestStatusBefore: createLastStatusBefore(false),
+        until: false,
+        maxDurationMs: Infinity,
       })
     ).toEqual({
       onlineMs: 39600000, totalMs: 86400000,
@@ -400,7 +415,8 @@ describe('gatherDailyStats()', () => {
           createStatus(false, '17:20'),
           createStatus(true,  '17:55'),
         ],
-        latestStatusBefore: createLastStatusBefore(true)
+        latestStatusBefore: createLastStatusBefore(true),
+        maxDurationMs: Infinity,
       })
     ).toEqual({
       onlineMs: 28500000, totalMs: 68100000,
@@ -449,6 +465,7 @@ describe('gatherDailyStats()', () => {
           createStatus(true,  '17:30'),
         ],
         latestStatusBefore: undefined,
+        maxDurationMs: Infinity,
       })
     ).toEqual({
       onlineMs: 1500000, totalMs: 2100000,

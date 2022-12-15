@@ -2,10 +2,10 @@ import { getStartOfTheDay } from './utils/date.js'
 
 export function gatherDailyStats({
   date,
-  until = false,
+  until,
   statuses,
   latestStatusBefore,
-  maxDurationMs = Infinity,
+  maxDurationMs,
 }) {
   const perHour = []
   let onlineMs = 0

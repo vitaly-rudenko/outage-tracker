@@ -13,22 +13,13 @@ export function formatDuration({ ms, localize }) {
     return localize('duration.seconds', { duration: Math.round(ms / 1000) })
   }
 
-  const days = Math.floor(ms / (24 * 60 * 60_000))
-  const hours = Math.floor(ms / (60 * 60_000)) % 24
+  const hours = Math.floor(ms / (60 * 60_000))
   const minutes = Math.floor(ms / 60_000) % 60
-  
-  const duration = [
-    days > 0 ? days : undefined,
-    (days > 0 || hours > 0) ? hours : undefined,
-    minutes,
-  ]
-    .filter(v => v !== undefined)
-    .map((v, i) => i > 0 ? String(v).padStart(2, '0') : v)
-    .join(':')
 
-  if (days > 0) {
-    return localize('duration.days', { duration })
-  }
+  const duration = [hours > 0 ? hours : undefined, minutes]
+    .filter((v) => v !== undefined)
+    .map((v, i) => (i > 0 ? String(v).padStart(2, '0') : v))
+    .join(':')
 
   if (hours > 0) {
     return localize('duration.hours', { duration })

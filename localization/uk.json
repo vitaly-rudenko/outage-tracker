@@ -40,7 +40,6 @@
     "lineWithPercentage": "{icons} {time} | {percentage}%"
   },
   "duration": {
-    "days": "{duration} дн.",
     "hours": "{duration} год.",
     "minutes": "{duration} хв.",
     "seconds": "{duration} с."
