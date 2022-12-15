@@ -1,5 +1,5 @@
 import { gatherDailyStats } from './gatherDailyStats.js'
-import { getStartOfTheDay } from './getStartOfTheDay.js'
+import { getStartOfTheDay } from './utils/date.js'
 
 export function gatherWeeklyStats({
   date,

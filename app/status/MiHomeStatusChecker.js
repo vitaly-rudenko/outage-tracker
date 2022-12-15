@@ -1,5 +1,4 @@
 import * as mihome from 'node-mihome'
-import { logger } from '../logger.js'
 import { Status } from './Status.js'
 
 export class MiHomeStatusChecker {

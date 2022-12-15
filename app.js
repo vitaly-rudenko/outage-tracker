@@ -12,37 +12,28 @@ import {
   username,
   useWebhooks,
 } from './env.js'
-import { TelegramErrorLogger } from './app/TelegramErrorLogger.js'
-import { versionCommand } from './app/flows/version.js'
-import { MiHomeStatusChecker } from './app/MiHomeStatusChecker.js'
-import { StatusPostgresStorage } from './app/StatusPostgresStorage.js'
-import { gatherDailyStats } from './app/gatherDailyStats.js'
-import { formatDailyStats } from './app/formatDailyStats.js'
-import { formatTime } from './app/formatTime.js'
-import { gatherWeeklyStats } from './app/gatherWeeklyStats.js'
-import { formatWeeklyStats } from './app/formatWeeklyStats.js'
-import { withLocalization } from './app/localization/middlewares/localization.js'
-import { withLanguage } from './app/localization/localize.js'
-import { escapeMd } from './app/escapeMd.js'
-
-const maxDurationMs = 10 * 60_000
-const aggregateHours = 2
-const days = 7
+import { withLanguage } from './app/localize.js'
+import { MiHomeStatusChecker } from './app/status/MiHomeStatusChecker.js'
+import { StatusPostgresStorage } from './app/status/StatusPostgresStorage.js'
+import { TelegramErrorLogger } from './app/telegram/TelegramErrorLogger.js'
+import { versionCommand } from './app/telegram/flows/version.js'
+import { withLocalization } from './app/telegram/withLocalization.js'
+import { nowCommand } from './app/status/flows/now.js'
+import { todayCommand, weekCommand } from './app/status/flows/stats.js'
 
 async function start() {
   const localizeDefault = withLanguage('uk')
-
-  const statusChecker = new MiHomeStatusChecker({
-    country,
-    password,
-    username,
-  })
 
   logger.info({}, 'Connecting to Postgres')
   const pgClient = new pg.Client(databaseUrl)
   await pgClient.connect()
 
   const statusStorage = new StatusPostgresStorage(pgClient)
+  const statusChecker = new MiHomeStatusChecker({
+    country,
+    password,
+    username,
+  })
 
   const bot = new Telegraf(telegramBotToken)
   const errorLogger = new TelegramErrorLogger({
@@ -52,15 +43,6 @@ async function start() {
 
   process.once('SIGINT', () => bot.stop('SIGINT'))
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
-
-  bot.telegram.setMyCommands([
-    { command: 'now', description: localizeDefault('commands.now') },
-    { command: 'today', description: localizeDefault('commands.today') },
-    { command: 'week', description: localizeDefault('commands.week') },
-    { command: 'start', description: localizeDefault('commands.start') },
-    { command: 'version', description: localizeDefault('commands.version') },
-  ])
-
   process.on('unhandledRejection', (error) => {
     errorLogger.log(error)
   })
@@ -72,120 +54,24 @@ async function start() {
     })
   }
 
+  // --- COMMANDS
+
+  bot.telegram.setMyCommands([
+    { command: 'now', description: localizeDefault('commands.now') },
+    { command: 'today', description: localizeDefault('commands.today') },
+    { command: 'week', description: localizeDefault('commands.week') },
+    { command: 'start', description: localizeDefault('commands.start') },
+    { command: 'version', description: localizeDefault('commands.version') },
+  ])
+
   bot.use(withLocalization())
-
-  bot.start(async (context) => {
-    await context.reply('Hello!')
-  })
-
   bot.command('version', versionCommand())
-
-  bot.command('now', async (context) => {
-    const { localize } = context.state
-
-    const message = await context.reply(localize('fetchingStatus'), {
-      parse_mode: 'MarkdownV2',
-    })
-
-    const latestStatusChange = await statusStorage.getLatestStatusChange()
-    const currentStatus = await statusChecker.check()
-
-    let replyText
-    if (
-      !latestStatusChange ||
-      latestStatusChange.isOnline !== currentStatus.isOnline
-    ) {
-      await statusStorage.storeStatus(currentStatus)
-
-      replyText = currentStatus.isOnline
-        ? localize('now.becameOnline')
-        : localize('now.becameOffline')
-    } else {
-      const time =
-        currentStatus.createdAt.getTime() -
-        latestStatusChange.createdAt.getTime()
-
-      replyText = currentStatus.isOnline
-        ? localize('now.stillOnline', { duration: escapeMd(formatTime(time)) })
-        : localize('now.stillOffline', { duration: escapeMd(formatTime(time)) })
-    }
-
-    await bot.telegram.editMessageText(
-      message.chat.id,
-      message.message_id,
-      undefined,
-      replyText,
-      { parse_mode: 'MarkdownV2' }
-    )
-  })
-
-  bot.command('today', async (context) => {
-    const { localize } = context.state
-
-    const message = await context.reply(localize('fetchingStatus'), {
-      parse_mode: 'MarkdownV2',
-    })
-
-    await statusStorage.storeStatus(await statusChecker.check())
-
-    const date = new Date()
-    const statuses = await statusStorage.getDailyStatuses({ date })
-    const latestStatusBefore = await statusStorage.getLatestStatusBeforeDate({
-      date,
-    })
-
-    const dailyStats = gatherDailyStats({
-      date,
-      until: true,
-      statuses,
-      latestStatusBefore,
-      maxDurationMs,
-    })
-
-    await bot.telegram.editMessageText(
-      message.chat.id,
-      message.message_id,
-      undefined,
-      formatDailyStats({ date, dailyStats, aggregateHours, localize }),
-      { parse_mode: 'MarkdownV2' }
-    )
-  })
-
-  bot.command('week', async (context) => {
-    const { localize } = context.state
-
-    const message = await context.reply(localize('fetchingStatus'), {
-      parse_mode: 'MarkdownV2',
-    })
-
-    await statusStorage.storeStatus(await statusChecker.check())
-
-    const date = new Date()
-    const statuses = await statusStorage.getWeeklyStatuses({ date, days })
-    const latestStatusBefore = await statusStorage.getLatestStatusBeforeWeek({
-      date,
-      days,
-    })
-
-    const weeklyStats = gatherWeeklyStats({
-      date,
-      days,
-      until: true,
-      statuses,
-      latestStatusBefore,
-      maxDurationMs,
-    })
-
-    await bot.telegram.editMessageText(
-      message.chat.id,
-      message.message_id,
-      undefined,
-      formatWeeklyStats({ weeklyStats, aggregateHours, localize }),
-      { parse_mode: 'MarkdownV2' }
-    )
-  })
-
+  bot.command('now', nowCommand({ bot, statusChecker, statusStorage }))
+  bot.command('today', todayCommand({ bot, statusChecker, statusStorage }))
+  bot.command('week', weekCommand({ bot, statusChecker, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
+
+  // --- HTTP API
 
   const app = express()
   app.use(express.json())
@@ -220,6 +106,8 @@ async function start() {
 
   logger.info({}, 'Starting Express app')
   await new Promise((resolve) => app.listen(port, () => resolve(undefined)))
+
+  // --- TELEGRAM WEBHOOKS
 
   try {
     logger.info({}, 'Removing existing webhook')

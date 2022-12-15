@@ -7,12 +7,12 @@
     "version": "Версія"
   },
   "fetchingStatus": "⏳ Отримуємо поточний статус\\.\\.\\.",
-  "now": {
-    "becameOnline": "✅ Тепер онлайн",
-    "becameOffline": "❌ Тепер офлайн",
-    "stillOnline": "✅ Онлайн вже {duration}",
-    "stillOffline": "❌ Офлайн вже {duration}"
-  },
+  "becameOnline": "✅ Онлайн",
+  "becameOffline": "❌ Офлайн",
+  "becameOnlineAfter": "✅ Онлайн після *{duration}* офлайну",
+  "becameOfflineAfter": "❌ Офлайн після *{duration}* онлайну",
+  "stillOnline": "✅ Онлайн вже *{duration}*",
+  "stillOffline": "❌ Офлайн вже *{duration}*",
   "daily": {
     "message": [
       "Статистика за *{date}*:",
@@ -38,5 +38,11 @@
     ],
     "line": "{icons} {time}",
     "lineWithPercentage": "{icons} {time} | {percentage}%"
+  },
+  "duration": {
+    "days": "{duration} дн.",
+    "hours": "{duration} год.",
+    "minutes": "{duration} хв.",
+    "seconds": "{duration} с."
   }
 }

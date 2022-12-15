@@ -1,5 +1,5 @@
-import { escapeMd } from './escapeMd.js'
-import { formatTime } from './formatTime.js'
+import { formatDuration } from './utils/date.js'
+import { escapeMd } from './utils/escapeMd.js'
 
 export function formatDailyStats({
   date,
@@ -11,8 +11,8 @@ export function formatDailyStats({
 
   return localize('daily.message', {
     date: escapeMd(formatDate(date)),
-    onlineDuration: escapeMd(formatTime(onlineMs)),
-    offlineDuration: escapeMd(formatTime(totalMs - onlineMs)),
+    onlineDuration: escapeMd(formatDuration({ ms: onlineMs, localize })),
+    offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
     hours: Array.from(
       new Array(Math.floor(perHour.length / aggregateHours)),
       (_, i) => {

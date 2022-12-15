@@ -1,13 +1,13 @@
-import { escapeMd } from './escapeMd.js'
-import { formatTime } from './formatTime.js'
+import { formatDuration } from './utils/date.js'
+import { escapeMd } from './utils/escapeMd.js'
 
 export function formatWeeklyStats({ weeklyStats, aggregateHours, localize }) {
   const { totalMs, onlineMs, perDay } = weeklyStats
 
   return localize('weekly.message', {
     days: perDay.length,
-    onlineDuration: escapeMd(formatTime(onlineMs)),
-    offlineDuration: escapeMd(formatTime(totalMs - onlineMs)),
+    onlineDuration: escapeMd(formatDuration({ ms: onlineMs, localize })),
+    offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
     lines: Array.from(
       new Array(
         Math.floor(perDay[0].dailyStats.perHour.length / aggregateHours)
