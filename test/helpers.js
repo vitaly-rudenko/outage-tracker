@@ -1,4 +1,4 @@
-import { Status } from '../../app/Status.js'
+import { Status } from '../app/status/Status.js'
 
 export const today = new Date('2020-01-02')
 

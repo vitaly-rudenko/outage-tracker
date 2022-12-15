@@ -1,4 +1,4 @@
-import { gatherDailyStats } from '../../app/gatherDailyStats.js'
+import { gatherDailyStats } from '../app/gatherDailyStats.js'
 import { today, createLastStatusBefore, createStatus } from './helpers.js'
 
 function min(min) {

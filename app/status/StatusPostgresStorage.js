@@ -10,11 +10,11 @@ export class StatusPostgresStorage {
   /** @param {Status} status */
   async createStatus(status) {
     try {
-      await this._client.query(
+      const response = await this._client.query(
         `
         INSERT INTO status (is_online, raw, created_at)
         VALUES ($1, $2, $3)
-        RETURNING id;
+        RETURNING *;
       `,
         [
           status.isOnline,
@@ -22,6 +22,8 @@ export class StatusPostgresStorage {
           status.createdAt,
         ]
       )
+
+      return this.deserializeStatus(response.rows[0])
     } catch (error) {
       if (String(error.code) === '23505') {
         throw new AlreadyExistsError()

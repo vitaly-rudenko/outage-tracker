@@ -8,6 +8,7 @@
     "start": "npm run migrate && node app.js",
     "dev": "npm run migrate && nodemon --ignore test/ -x 'npm start'",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "integration-test": "npm run test -- integration-test/**/*.test.js",
     "test:watch": "nodemon -x 'npm run test'",
     "job:check-status": "npm run migrate && node jobs/check-status.js",
     "migrate": "npm run umzug db:migrate",
