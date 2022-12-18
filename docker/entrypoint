@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cd /app
+
+DB_DETAILS=$(echo $DATABASE_URL | cut -d'/' -f3)
+DB_HOST=$(echo $DB_DETAILS | cut -d'@' -f2 | cut -d':' -f1)
+DB_PORT=$(echo $DB_DETAILS | cut -d'@' -f2 | cut -d':' -f2)
+
+echo "Waiting for ${DB_HOST}:${DB_PORT}..."
+./docker/wait-for "${DB_HOST}:${DB_PORT}" -t 120
+
+echo "Starting the app..."
+npm start

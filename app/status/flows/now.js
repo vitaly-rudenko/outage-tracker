@@ -4,11 +4,10 @@ import { escapeMd } from '../../utils/escapeMd.js'
 /**
  * @param {{
  *   bot: import('telegraf').Telegraf,
- *   statusChecker: import('../MiHomeStatusChecker').MiHomeStatusChecker,
- *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
+ *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
  * }} dependencies 
  */
-export function nowCommand({ bot, statusChecker, statusStorage }) {
+export function nowCommand({ bot, statusCheckUseCase }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -16,25 +15,22 @@ export function nowCommand({ bot, statusChecker, statusStorage }) {
       parse_mode: 'MarkdownV2',
     })
 
-    const latestStatusFirstChange = await statusStorage.findLatestStatusFirstChange()
-    const currentStatus = await statusChecker.check()
+    const { status, latestStatusFirstChange } = await statusCheckUseCase.run({ retryIfOffline: false })
 
     let replyText
     if (
       !latestStatusFirstChange ||
-      latestStatusFirstChange.isOnline !== currentStatus.isOnline
+      latestStatusFirstChange.isOnline !== status.isOnline
     ) {
-      await statusStorage.createStatus(currentStatus)
-
-      replyText = currentStatus.isOnline
+      replyText = status.isOnline
         ? localize('becameOnline')
         : localize('becameOffline')
     } else {
       const durationMs =
-        currentStatus.createdAt.getTime() -
+        status.createdAt.getTime() -
         latestStatusFirstChange.createdAt.getTime()
 
-      replyText = currentStatus.isOnline
+      replyText = status.isOnline
         ? localize('stillOnline', { duration: escapeMd(formatDuration({ ms: durationMs, localize })) })
         : localize('stillOffline', { duration: escapeMd(formatDuration({ ms: durationMs, localize })) })
     }

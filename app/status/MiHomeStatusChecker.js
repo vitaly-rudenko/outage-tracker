@@ -25,7 +25,16 @@ export class MiHomeStatusChecker {
   async _init() {
     if (!this._initializePromise) {
       this._initializePromise = (async () => {
-        mihome.miioProtocol.init()
+        const originalParseJson = mihome.miCloudProtocol._parseJson.bind(mihome.miCloudProtocol)
+        mihome.miCloudProtocol._parseJson = (value) => {
+          const result = originalParseJson(value)
+
+          if (result.notificationUrl) {
+            console.log('Notification URL:', result.notificationUrl)
+          }
+
+          return result
+        }
         await mihome.miCloudProtocol.login(this._username, this._password)
       })()
     }

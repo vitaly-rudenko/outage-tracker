@@ -1,14 +1,14 @@
-import '../env.js'
 import { Umzug } from 'umzug'
 import pg from 'pg'
+import { databaseUrl } from '../env.js'
 import { PostgresStorage } from './PostgresStorage.js'
 
-const client = new pg.Client(process.env.DATABASE_URL)
-client.connect()
+const pgClient = new pg.Client(databaseUrl)
+pgClient.connect()
 
 export const umzug = new Umzug({
   migrations: { glob: 'migrations/*-*.cjs' },
-  context: client,
-  storage: new PostgresStorage(client, 'migrations_meta'),
+  context: pgClient,
+  storage: new PostgresStorage(pgClient, 'migrations_meta'),
   logger: console,
 })

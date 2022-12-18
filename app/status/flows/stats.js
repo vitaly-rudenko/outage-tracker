@@ -3,6 +3,7 @@ import { formatDailyStats } from '../../formatDailyStats.js'
 import { formatWeeklyStats } from '../../formatWeeklyStats.js'
 import { gatherDailyStats } from '../../gatherDailyStats.js'
 import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
+import { logger } from '../../../logger.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
@@ -11,11 +12,11 @@ const weeklyDays = 7
 /**
  * @param {{
  *   bot: import('telegraf').Telegraf,
- *   statusChecker: import('../../status/MiHomeStatusChecker').MiHomeStatusChecker,
- *   statusStorage: import('../../status/StatusPostgresStorage').StatusPostgresStorage,
- * }} dependencies 
+ *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
+ *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
+* }} dependencies 
  */
-export function todayCommand({ bot, statusChecker, statusStorage }) {
+export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -23,7 +24,11 @@ export function todayCommand({ bot, statusChecker, statusStorage }) {
       parse_mode: 'MarkdownV2',
     })
 
-    await statusStorage.createStatus(await statusChecker.check())
+    try {
+      await statusCheckUseCase.run({ retryIfOffline: false })
+    } catch (error) {
+      logger.error(error, 'Could not run status check use case')
+    }
 
     const now = new Date()
     const today = getStartOfTheDay(now)
@@ -55,11 +60,11 @@ export function todayCommand({ bot, statusChecker, statusStorage }) {
 /**
  * @param {{
  *   bot: import('telegraf').Telegraf,
- *   statusChecker: import('../MiHomeStatusChecker').MiHomeStatusChecker,
+ *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies 
  */
-export function weekCommand({ bot, statusChecker, statusStorage }) {
+export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -67,7 +72,11 @@ export function weekCommand({ bot, statusChecker, statusStorage }) {
       parse_mode: 'MarkdownV2',
     })
 
-    await statusStorage.createStatus(await statusChecker.check())
+    try {
+      await statusCheckUseCase.run({ retryIfOffline: false })
+    } catch (error) {
+      logger.error(error, 'Could not run status check use case')
+    }
 
     const now = new Date()
     const today = getStartOfTheDay(now)

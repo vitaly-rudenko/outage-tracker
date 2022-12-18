@@ -1,7 +1,7 @@
 {
   "name": "outage-tracker",
-  "version": "0.0.1",
-  "description": "Power outage tracker using Telegram Bot API and Xiaomi Mi Home API",
+  "version": "1.0.0",
+  "description": "Power outage tracker using Telegram Bot API and TP-Link Cloud API",
   "main": "app.js",
   "type": "module",
   "scripts": {
@@ -12,7 +12,9 @@
     "test:watch": "nodemon -x 'npm run test'",
     "job:check-status": "npm run migrate && node jobs/check-status.js",
     "migrate": "npm run umzug db:migrate",
-    "umzug": "node ./umzug/cli.js"
+    "umzug": "node ./umzug/cli.js",
+    "deploy": "fly scale count 1 && fly deploy",
+    "undeploy": "fly scale count 0"
   },
   "repository": {
     "type": "git",
@@ -31,11 +33,15 @@
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "markdown-escapes": "^2.0.1",
+    "mihome": "^1.0.3",
+    "node-fetch": "^3.3.0",
     "node-mihome": "^0.0.32",
     "pg": "^8.8.0",
     "pino": "^8.7.0",
     "pino-pretty": "^9.1.1",
+    "set-cookie-parser": "^2.5.1",
     "telegraf": "^4.11.2",
+    "tplink-cloud-api": "^0.8.1",
     "umzug": "^3.2.1"
   },
   "devDependencies": {

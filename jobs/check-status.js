@@ -1,21 +1,19 @@
 import pg from 'pg'
 import { Telegraf } from 'telegraf'
 import { withLanguage } from '../app/localize.js'
-import { MiHomeStatusChecker } from '../app/status/MiHomeStatusChecker.js'
 import { StatusPostgresStorage } from '../app/status/StatusPostgresStorage.js'
-import { formatDuration } from '../app/utils/date.js'
-import { escapeMd } from '../app/utils/escapeMd.js'
+import { TpLinkStatusChecker } from '../app/status/TpLinkStatusChecker.js'
+import { StatusCheckUseCase } from '../app/status/StatusCheckUseCase.js'
 import {
   chatId,
-  country,
   databaseUrl,
-  password,
+  retryMs,
   telegramBotToken,
-  username,
+  tpLinkPassword,
+  tpLinkTerminalId,
+  tpLinkUsername,
 } from '../env.js'
 import { logger } from '../logger.js'
-
-const RETRY_MS = 30_000
 
 async function run() {
   const localizeDefault = withLanguage('uk')
@@ -27,66 +25,20 @@ async function run() {
   await pgClient.connect()
 
   const statusStorage = new StatusPostgresStorage(pgClient)
-  const statusChecker = new MiHomeStatusChecker({
-    country,
-    password,
-    username,
+  const statusChecker = new TpLinkStatusChecker({
+    username: tpLinkUsername,
+    password: tpLinkPassword,
+    terminalId: tpLinkTerminalId,
   })
 
-  logger.info({}, 'Fetching current status')
-  let status = await statusChecker.check()
-
-  if (!status.isOnline) {
-    logger.info({}, `Current status is offline, retrying in ${RETRY_MS} ms`)
-    await new Promise((resolve) => setTimeout(resolve, RETRY_MS))
-
-    logger.info({}, 'Fetching current status again')
-    status = await statusChecker.check()
-  }
-
-  logger.info({}, 'Fetching the latest status first change')
-  const latestStatusFirstChange =
-    await statusStorage.findLatestStatusFirstChange()
-
-  logger.info({}, 'Storing the current status')
-  await statusStorage.createStatus(status)
-
-  // TODO: perhaps only use latestStatusFirstChange if it was recent enough
-  logger.info({}, 'Sending the message to the chat if necessary')
-  if (latestStatusFirstChange) {
-    if (latestStatusFirstChange.isOnline !== status.isOnline) {
-      const latestStatusDurationMs =
-        status.createdAt.getTime() - latestStatusFirstChange.createdAt.getTime()
-      const duration = escapeMd(
-        formatDuration({
-          ms: latestStatusDurationMs,
-          localize: localizeDefault,
-        })
-      )
-
-      logger.info(
-        { status, latestStatusFirstChange, latestStatusDurationMs },
-        'Status has been changed since the last time'
-      )
-
-      await bot.telegram.sendMessage(
-        chatId,
-        status.isOnline
-          ? localizeDefault('becameOnlineAfter', { duration })
-          : localizeDefault('becameOfflineAfter', { duration }),
-        { parse_mode: 'MarkdownV2' }
-      )
-    }
-  } else {
-    logger.info({ status }, 'New status has been retrieved')
-    await bot.telegram.sendMessage(
-      chatId,
-      status.isOnline
-        ? localizeDefault('becameOnline')
-        : localizeDefault('becameOffline'),
-      { parse_mode: 'MarkdownV2' }
-    )
-  }
+  await new StatusCheckUseCase({
+    bot,
+    localize: localizeDefault,
+    retryMs,
+    statusChecker,
+    statusStorage,
+    chatId,
+  }).run({ retryIfOffline: true })
 }
 
 run()

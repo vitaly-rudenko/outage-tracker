@@ -3,23 +3,27 @@ import express from 'express'
 import pg from 'pg'
 import { logger } from './logger.js'
 import {
-  country,
+  chatId,
+  checkStatusJobIntervalMs,
   databaseUrl,
   debugChatId,
   domain,
-  password,
+  retryMs,
   telegramBotToken,
-  username,
+  tpLinkPassword,
+  tpLinkTerminalId,
+  tpLinkUsername,
   useWebhooks,
 } from './env.js'
 import { withLanguage } from './app/localize.js'
-import { MiHomeStatusChecker } from './app/status/MiHomeStatusChecker.js'
 import { StatusPostgresStorage } from './app/status/StatusPostgresStorage.js'
 import { TelegramErrorLogger } from './app/telegram/TelegramErrorLogger.js'
 import { versionCommand } from './app/telegram/flows/version.js'
 import { withLocalization } from './app/telegram/withLocalization.js'
 import { nowCommand } from './app/status/flows/now.js'
 import { todayCommand, weekCommand } from './app/status/flows/stats.js'
+import { TpLinkStatusChecker } from './app/status/TpLinkStatusChecker.js'
+import { StatusCheckUseCase } from './app/status/StatusCheckUseCase.js'
 
 async function start() {
   const localizeDefault = withLanguage('uk')
@@ -29,16 +33,25 @@ async function start() {
   await pgClient.connect()
 
   const statusStorage = new StatusPostgresStorage(pgClient)
-  const statusChecker = new MiHomeStatusChecker({
-    country,
-    password,
-    username,
+  const statusChecker = new TpLinkStatusChecker({
+    username: tpLinkUsername,
+    password: tpLinkPassword,
+    terminalId: tpLinkTerminalId,
   })
 
   const bot = new Telegraf(telegramBotToken)
   const errorLogger = new TelegramErrorLogger({
     telegram: bot.telegram,
     debugChatId,
+  })
+
+  const statusCheckUseCase = new StatusCheckUseCase({
+    bot,
+    localize: localizeDefault,
+    retryMs,
+    statusChecker,
+    statusStorage,
+    chatId,
   })
 
   process.once('SIGINT', () => bot.stop('SIGINT'))
@@ -60,15 +73,14 @@ async function start() {
     { command: 'now', description: localizeDefault('commands.now') },
     { command: 'today', description: localizeDefault('commands.today') },
     { command: 'week', description: localizeDefault('commands.week') },
-    { command: 'start', description: localizeDefault('commands.start') },
     { command: 'version', description: localizeDefault('commands.version') },
   ])
 
   bot.use(withLocalization())
   bot.command('version', versionCommand())
-  bot.command('now', nowCommand({ bot, statusChecker, statusStorage }))
-  bot.command('today', todayCommand({ bot, statusChecker, statusStorage }))
-  bot.command('week', weekCommand({ bot, statusChecker, statusStorage }))
+  bot.command('now', nowCommand({ bot, statusCheckUseCase }))
+  bot.command('today', todayCommand({ bot, statusCheckUseCase, statusStorage }))
+  bot.command('week', weekCommand({ bot, statusCheckUseCase, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
 
   // --- HTTP API
@@ -137,9 +149,27 @@ async function start() {
       `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}`
     )
   } else {
-    logger.info({}, 'Starting Telegram bot')
+    logger.info({}, 'Telegram bot started')
 
-    bot.launch()
+    bot.launch().catch((error) => {
+      logger.error(error, 'Could not launch the bot')
+      process.exit(1)
+    })
+  }
+
+  if (Number.isInteger(checkStatusJobIntervalMs)) {
+    ;(async function checkStatus() {
+      logger.info({ chatId, retryMs }, 'Running automatic status check')
+
+      try {
+        await statusCheckUseCase.run({ retryIfOffline: true })
+      } catch (error) {
+        logger.error(error, 'Could not check status automatically')
+      } finally {
+        logger.info({ checkStatusJobIntervalMs }, 'Scheduling next automatic status check')
+        setTimeout(checkStatus, checkStatusJobIntervalMs);
+      }
+    })()
   }
 }
 
