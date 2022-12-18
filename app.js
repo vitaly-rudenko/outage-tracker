@@ -78,14 +78,19 @@ async function start() {
     { command: 'version', description: localizeDefault('commands.version') },
   ])
 
+  bot.use((context, next) => {
+    if (context.chat?.type === 'private') {
+      return next()
+    }
+  })
+
   if (allowCommandsToAdminOnly) {
     bot.use(async (context, next) => {
-      if (!context.from || String(context.from.id) !== adminUserId) {
-        await context.reply(localizeDefault('onlyAdminIsAllowed'))
-        return
+      if (context.from && String(context.from.id) === adminUserId) {
+        return next()
       }
 
-      return next()
+      await context.reply(localizeDefault('onlyAdminIsAllowed'))
     })
   }
 
