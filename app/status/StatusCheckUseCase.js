@@ -4,13 +4,13 @@ import { escapeMd } from '../utils/escapeMd.js'
 import { Status } from './Status.js'
 
 export class StatusCheckUseCase {
-  constructor({ statusChecker, statusStorage, retryMs, localize, bot, chatId }) {
+  constructor({ statusChecker, statusStorage, retryMs, localize, bot, reportChatId }) {
     this._statusChecker = statusChecker
     this._statusStorage = statusStorage
     this._retryMs = retryMs
     this._localize = localize
     this._bot = bot
-    this._chatId = chatId
+    this._reportChatId = reportChatId
   }
 
   /**
@@ -66,7 +66,7 @@ export class StatusCheckUseCase {
         )
 
         await this._bot.telegram.sendMessage(
-          this._chatId,
+          this._reportChatId,
           status.isOnline
             ? this._localize('becameOnlineAfter', { duration })
             : this._localize('becameOfflineAfter', { duration }),
@@ -78,7 +78,7 @@ export class StatusCheckUseCase {
     } else {
       logger.info({ status }, 'New status has been retrieved')
       await this._bot.telegram.sendMessage(
-        this._chatId,
+        this._reportChatId,
         status.isOnline
           ? this._localize('becameOnline')
           : this._localize('becameOffline'),

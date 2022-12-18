@@ -8,9 +8,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 export const useWebhooks = process.env.USE_WEBHOOKS === 'true'
 export const domain = requireIf(process.env.DOMAIN, useWebhooks)
 export const debugChatId = require(process.env.DEBUG_CHAT_ID)
-export const adminChatId = require(process.env.ADMIN_CHAT_ID)
+export const adminUserId = require(process.env.ADMIN_USER_ID)
+export const allowCommandsToAdminOnly = process.env.ALLOW_COMMANDS_TO_ADMIN_ONLY === 'true'
 export const telegramBotToken = require(process.env.TELEGRAM_BOT_TOKEN)
-export const chatId = require(process.env.TELEGRAM_CHAT_ID)
+export const reportChatId = require(process.env.REPORT_CHAT_ID)
 export const tpLinkUsername = require(process.env.TP_LINK_USERNAME)
 export const tpLinkPassword = require(process.env.TP_LINK_PASSWORD)
 export const tpLinkTerminalId = process.env.TP_LINK_TERMINAL_ID || 'my-outage-tracker-bot'

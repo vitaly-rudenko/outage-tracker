@@ -5,7 +5,7 @@ import { StatusPostgresStorage } from '../app/status/StatusPostgresStorage.js'
 import { TpLinkStatusChecker } from '../app/status/TpLinkStatusChecker.js'
 import { StatusCheckUseCase } from '../app/status/StatusCheckUseCase.js'
 import {
-  chatId,
+  reportChatId,
   databaseUrl,
   retryMs,
   telegramBotToken,
@@ -37,7 +37,7 @@ async function run() {
     retryMs,
     statusChecker,
     statusStorage,
-    chatId,
+    reportChatId,
   }).run({ retryIfOffline: true })
 }
 

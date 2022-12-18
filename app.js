@@ -3,7 +3,9 @@ import express from 'express'
 import pg from 'pg'
 import { logger } from './logger.js'
 import {
-  chatId,
+  adminUserId,
+  allowCommandsToAdminOnly,
+  reportChatId,
   checkStatusJobIntervalMs,
   databaseUrl,
   debugChatId,
@@ -51,7 +53,7 @@ async function start() {
     retryMs,
     statusChecker,
     statusStorage,
-    chatId,
+    reportChatId,
   })
 
   process.once('SIGINT', () => bot.stop('SIGINT'))
@@ -75,6 +77,17 @@ async function start() {
     { command: 'week', description: localizeDefault('commands.week') },
     { command: 'version', description: localizeDefault('commands.version') },
   ])
+
+  if (allowCommandsToAdminOnly) {
+    bot.use(async (context, next) => {
+      if (!context.from || String(context.from.id) !== adminUserId) {
+        await context.reply(localizeDefault('onlyAdminIsAllowed'))
+        return
+      }
+
+      return next()
+    })
+  }
 
   bot.use(withLocalization())
   bot.command('version', versionCommand())
@@ -159,7 +172,7 @@ async function start() {
 
   if (Number.isInteger(checkStatusJobIntervalMs)) {
     ;(async function checkStatus() {
-      logger.info({ chatId, retryMs }, 'Running automatic status check')
+      logger.info({ reportChatId, retryMs }, 'Running automatic status check')
 
       try {
         await statusCheckUseCase.run({ retryIfOffline: true })
