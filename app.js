@@ -1,5 +1,4 @@
 import { Telegraf } from 'telegraf'
-import express from 'express'
 import pg from 'pg'
 import { logger } from './logger.js'
 import {
@@ -9,12 +8,10 @@ import {
   checkStatusJobIntervalMs,
   databaseUrl,
   debugChatId,
-  domain,
   retryMs,
   telegramBotToken,
   tpLinkPassword,
   tpLinkUsername,
-  useWebhooks,
   retryAttempts,
   notificationSoundDelayMs,
 } from './env.js'
@@ -74,13 +71,6 @@ async function start() {
     errorLogger.log(error, 'Unhandled rejection')
   })
 
-  if (!useWebhooks) {
-    bot.use((context, next) => {
-      logger.debug({ update: context.update }, 'Direct update received')
-      return next()
-    })
-  }
-
   // --- COMMANDS
 
   bot.telegram.setMyCommands([
@@ -113,81 +103,8 @@ async function start() {
   bot.command('week', weekCommand({ bot, statusCheckUseCase, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
 
-  // --- HTTP API
-
-  const app = express()
-  app.use(express.json())
-
-  const handledBotUpdates = new Set()
-
-  app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
-    const updateId = req.body['update_id']
-    if (!updateId) {
-      logger.warn({ body: req.body }, 'Invalid webhook update')
-      res.sendStatus(500)
-      return
-    }
-
-    if (handledBotUpdates.has(updateId)) {
-      logger.debug({ body: req.body }, 'Webhook update is already handled')
-      res.sendStatus(200)
-      return
-    }
-
-    handledBotUpdates.add(updateId)
-
-    try {
-      logger.debug({ body: req.body }, 'Webhook update received')
-      await bot.handleUpdate(req.body, res)
-    } catch (error) {
-      next(error)
-    }
-  })
-
-  const port = Number(process.env.PORT) || 3001
-
-  logger.info({}, 'Starting Express app')
-  await new Promise((resolve) => app.listen(port, () => resolve(undefined)))
-
-  // --- TELEGRAM WEBHOOKS
-
-  try {
-    logger.info({}, 'Removing existing webhook')
-    await bot.telegram.deleteWebhook()
-  } catch (error) {
-    logger.warn({ error }, 'Could not delete webhook:')
-  }
-
-  if (useWebhooks) {
-    const webhookUrl = `${domain}/bot${telegramBotToken}`
-
-    logger.info({ webhookUrl }, 'Setting webhook')
-    while (true) {
-      try {
-        await bot.telegram.setWebhook(webhookUrl, {
-          allowed_updates: ['message', 'callback_query'],
-        })
-        break
-      } catch (error) {
-        logger.warn({ error }, 'Could not set webhook, retrying...')
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-    }
-
-    logger.info(
-      { webhookInfo: await bot.telegram.getWebhookInfo() },
-      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}`
-    )
-  } else {
-    logger.info({}, 'Telegram bot started')
-
-    bot.launch({
-      dropPendingUpdates: true,
-    }).catch((error) => {
-      logger.error(error, 'Could not launch the bot')
-      process.exit(1)
-    })
-  }
+  await bot.launch()
+  logger.info({}, 'Telegram bot started')
 
   if (Number.isInteger(checkStatusJobIntervalMs)) {
     async function runCheckStatusJob() {

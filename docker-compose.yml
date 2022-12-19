@@ -1,5 +1,23 @@
 version: '3.7'
 services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      USE_NATIVE_ENV: "true"
+      DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+      ADMIN_USER_ID: "$ADMIN_USER_ID"
+      ALLOW_COMMANDS_TO_ADMIN_ONLY: "$ALLOW_COMMANDS_TO_ADMIN_ONLY"
+      REPORT_CHAT_ID: "$REPORT_CHAT_ID"
+      TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
+      TP_LINK_USERNAME: "$TP_LINK_USERNAME"
+      TP_LINK_PASSWORD: "$TP_LINK_PASSWORD"
+      DATABASE_URL: "$DATABASE_URL"
+
   postgres:
     container_name: postgres
     image: postgres:13-alpine
@@ -7,5 +25,3 @@ services:
       POSTGRES_DB: "outage_tracker"
       POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "p4ssw0rd"
-    ports:
-      - "5432:5432"

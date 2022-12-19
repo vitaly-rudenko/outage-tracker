@@ -5,8 +5,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   config()
 }
 
-export const useWebhooks = process.env.USE_WEBHOOKS === 'true'
-export const domain = requireIf(process.env.DOMAIN, useWebhooks)
 export const debugChatId = require(process.env.DEBUG_CHAT_ID)
 export const adminUserId = require(process.env.ADMIN_USER_ID)
 export const allowCommandsToAdminOnly = process.env.ALLOW_COMMANDS_TO_ADMIN_ONLY === 'true'
