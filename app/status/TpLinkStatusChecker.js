@@ -7,10 +7,9 @@ export class TpLinkStatusChecker {
   _initializePromise
   _tpLink
 
-  constructor({ username, password, terminalId }) {
+  constructor({ username, password }) {
     this._username = username
     this._password = password
-    this._terminalId = terminalId
   }
 
   async check() {
@@ -40,7 +39,7 @@ export class TpLinkStatusChecker {
   async _init() {
     if (!this._initializePromise) {
       this._initializePromise = (async () => {
-        this._tpLink = await login(this._username, this._password, this._terminalId)
+        this._tpLink = await login(this._username, this._password)
       })()
     }
 

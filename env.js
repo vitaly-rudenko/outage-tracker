@@ -14,7 +14,6 @@ export const telegramBotToken = require(process.env.TELEGRAM_BOT_TOKEN)
 export const reportChatId = require(process.env.REPORT_CHAT_ID)
 export const tpLinkUsername = require(process.env.TP_LINK_USERNAME)
 export const tpLinkPassword = require(process.env.TP_LINK_PASSWORD)
-export const tpLinkTerminalId = process.env.TP_LINK_TERMINAL_ID || 'my-outage-tracker-bot'
 export const databaseUrl = require(process.env.DATABASE_URL)
 export const checkStatusJobIntervalMs = process.env.CHECK_STATUS_JOB_INTERVAL_MS
   ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : 5 * 60_000

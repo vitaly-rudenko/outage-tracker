@@ -13,7 +13,6 @@ import {
   retryMs,
   telegramBotToken,
   tpLinkPassword,
-  tpLinkTerminalId,
   tpLinkUsername,
   useWebhooks,
   retryAttempts,
@@ -40,7 +39,6 @@ async function start() {
   const statusChecker = new TpLinkStatusChecker({
     username: tpLinkUsername,
     password: tpLinkPassword,
-    terminalId: tpLinkTerminalId,
   })
 
   const bot = new Telegraf(telegramBotToken)
