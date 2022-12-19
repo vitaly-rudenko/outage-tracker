@@ -17,6 +17,7 @@ import {
   tpLinkUsername,
   useWebhooks,
   retryAttempts,
+  notificationSoundDelayMs,
 } from './env.js'
 import { withLanguage } from './app/localize.js'
 import { StatusPostgresStorage } from './app/status/StatusPostgresStorage.js'
@@ -53,6 +54,7 @@ async function start() {
     localize: localizeDefault,
     retryAttempts,
     retryMs,
+    notificationSoundDelayMs,
     statusChecker,
     statusStorage,
     reportChatId,

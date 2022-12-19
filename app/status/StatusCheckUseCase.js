@@ -4,18 +4,40 @@ import { escapeMd } from '../utils/escapeMd.js'
 import { Status } from './Status.js'
 
 export class StatusCheckUseCase {
-  constructor({ statusChecker, statusStorage, retryMs, retryAttempts, localize, bot, reportChatId }) {
+  /**
+   * @param {{
+   *   statusChecker: any,
+   *   statusStorage: any,
+   *   retryMs: number,
+   *   retryAttempts: number,
+   *   notificationSoundDelayMs: number,
+   *   localize: any,
+   *   bot: import('telegraf').Telegraf,
+   *   reportChatId: string,
+   * }} deps
+   */
+  constructor({
+    statusChecker,
+    statusStorage,
+    retryMs,
+    retryAttempts,
+    notificationSoundDelayMs,
+    localize,
+    bot,
+    reportChatId,
+  }) {
     this._statusChecker = statusChecker
     this._statusStorage = statusStorage
     this._retryMs = retryMs
     this._retryAttempts = retryAttempts
+    this._notificationSoundDelayMs = notificationSoundDelayMs
     this._localize = localize
     this._bot = bot
     this._reportChatId = reportChatId
   }
 
   /**
-   * 
+   *
    * @param {{ retryIfOffline: boolean }} input
    * @returns {Promise<{ status: Status, latestStatusFirstChange: Status }>}
    */
@@ -28,7 +50,7 @@ export class StatusCheckUseCase {
 
     logger.info({}, 'Storing the current status')
     await this._statusStorage.createStatus(status)
-  
+
     try {
       await this._notifyIfNecessary({ status, latestStatusFirstChange })
     } catch (error) {
@@ -44,10 +66,17 @@ export class StatusCheckUseCase {
     let status = await this._statusChecker.check()
 
     if (!status.isOnline && retryIfOffline) {
-      for (let retryAttempt = 1; retryAttempt <= this._retryAttempts; retryAttempt++) {
-        logger.info({ retryAttempt, retryMs: this._retryMs }, 'Current status is offline, retrying in a moment')
+      for (
+        let retryAttempt = 1;
+        retryAttempt <= this._retryAttempts;
+        retryAttempt++
+      ) {
+        logger.info(
+          { retryAttempt, retryMs: this._retryMs },
+          'Current status is offline, retrying in a moment'
+        )
         await new Promise((resolve) => setTimeout(resolve, this._retryMs))
-  
+
         logger.info({}, 'Fetching current status again')
         status = await this._statusChecker.check()
 
@@ -84,7 +113,11 @@ export class StatusCheckUseCase {
           status.isOnline
             ? this._localize('becameOnlineAfter', { duration })
             : this._localize('becameOfflineAfter', { duration }),
-          { parse_mode: 'MarkdownV2' }
+          {
+            parse_mode: 'MarkdownV2',
+            disable_notification:
+              latestStatusDurationMs < this._notificationSoundDelayMs,
+          }
         )
       } else {
         logger.info({}, 'Status has not been changed since the last time')

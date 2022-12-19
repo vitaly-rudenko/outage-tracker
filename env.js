@@ -22,6 +22,8 @@ export const retryAttempts = process.env.RETRY_ATTEMPTS
   ? Number(process.env.RETRY_ATTEMPTS) : 10
 export const retryMs = process.env.RETRY_MS
   ? Number(process.env.RETRY_MS) : 18_000
+export const notificationSoundDelayMs = process.env.NOTIFICATION_SOUND_DELAY_MS
+  ? Number(process.env.NOTIFICATION_SOUND_DELAY_MS) : 60 * 60_000
 export const logLevel = process.env.LOG_LEVEL || 'info'
 
 function require(value) {

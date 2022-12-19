@@ -13,6 +13,7 @@ import {
   tpLinkTerminalId,
   tpLinkUsername,
   retryAttempts,
+  notificationSoundDelayMs,
 } from '../env.js'
 import { logger } from '../logger.js'
 
@@ -37,6 +38,7 @@ async function run() {
     localize: localizeDefault,
     retryMs,
     retryAttempts,
+    notificationSoundDelayMs,
     statusChecker,
     statusStorage,
     reportChatId,
