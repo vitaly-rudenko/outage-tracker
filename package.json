@@ -12,9 +12,7 @@
     "jest": "NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "nodemon -x 'npm run test'",
     "migrate": "npm run umzug db:migrate",
-    "umzug": "node ./umzug/cli.js",
-    "deploy": "fly scale count 1 && fly deploy",
-    "undeploy": "fly scale count 0"
+    "umzug": "node ./umzug/cli.js"
   },
   "repository": {
     "type": "git",
