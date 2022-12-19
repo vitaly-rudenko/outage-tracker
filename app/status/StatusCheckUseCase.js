@@ -44,11 +44,11 @@ export class StatusCheckUseCase {
   async run({ retryIfOffline }) {
     const status = await this._fetchCurrentStatus({ retryIfOffline })
 
-    logger.info({}, 'Fetching the latest status first change')
+    logger.debug({}, 'Fetching the latest status first change')
     const latestStatusFirstChange =
       await this._statusStorage.findLatestStatusFirstChange()
 
-    logger.info({}, 'Storing the current status')
+    logger.debug({}, 'Storing the current status')
     await this._statusStorage.createStatus(status)
 
     try {
@@ -62,7 +62,7 @@ export class StatusCheckUseCase {
 
   /** @returns {Promise<import('./Status').Status>} */
   async _fetchCurrentStatus({ retryIfOffline }) {
-    logger.info({}, 'Fetching current status')
+    logger.debug({}, 'Fetching current status')
     let status = await this._statusChecker.check()
 
     if (!status.isOnline && retryIfOffline) {
@@ -71,13 +71,13 @@ export class StatusCheckUseCase {
         retryAttempt <= this._retryAttempts;
         retryAttempt++
       ) {
-        logger.info(
+        logger.debug(
           { retryAttempt, retryMs: this._retryMs },
           'Current status is offline, retrying in a moment'
         )
         await new Promise((resolve) => setTimeout(resolve, this._retryMs))
 
-        logger.info({}, 'Fetching current status again')
+        logger.debug({}, 'Fetching current status again')
         status = await this._statusChecker.check()
 
         if (status.isOnline) {
@@ -103,7 +103,7 @@ export class StatusCheckUseCase {
           })
         )
 
-        logger.info(
+        logger.debug(
           { status, latestStatusFirstChange, latestStatusDurationMs },
           'Status has been changed since the last time'
         )
@@ -120,10 +120,10 @@ export class StatusCheckUseCase {
           }
         )
       } else {
-        logger.info({}, 'Status has not been changed since the last time')
+        logger.debug({}, 'Status has not been changed since the last time')
       }
     } else {
-      logger.info({ status }, 'New status has been retrieved')
+      logger.debug({ status }, 'New status has been retrieved')
       await this._bot.telegram.sendMessage(
         this._reportChatId,
         status.isOnline

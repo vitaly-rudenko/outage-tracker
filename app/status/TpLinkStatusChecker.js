@@ -18,6 +18,7 @@ export class TpLinkStatusChecker {
       await this._init()
   
       const devices = await this._tpLink.getDeviceList();
+      logger.debug({ devices }, 'TP-Link device list has been fetched')
   
       return new Status({
         raw: devices,

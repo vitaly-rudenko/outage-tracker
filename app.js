@@ -198,7 +198,7 @@ async function start() {
       } catch (error) {
         logger.error(error, 'Could not check status automatically')
       } finally {
-        logger.info({ checkStatusJobIntervalMs }, 'Scheduling next automatic status check')
+        logger.debug({ checkStatusJobIntervalMs }, 'Scheduling next automatic status check')
         setTimeout(runCheckStatusJob, checkStatusJobIntervalMs);
       }
     }
