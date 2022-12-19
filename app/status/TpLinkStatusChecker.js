@@ -5,6 +5,7 @@ import { Status } from './Status.js'
 
 export class TpLinkStatusChecker {
   _initializePromise
+  _tpLink
 
   constructor({ username, password, terminalId }) {
     this._username = username
@@ -24,13 +25,14 @@ export class TpLinkStatusChecker {
         createdAt: new Date(),
       })
     } catch (error) {
+      this._initializePromise = undefined
+
       if (error?.err?.code === -20004) {
         throw new RateLimitError()
+      } else {
+        logger.error(error, 'Could not run check status use case')
+        throw error
       }
-
-      logger.error(error, 'Could not check status, resetting the status checker')
-      this._initializePromise = undefined
-      throw error
     }
   }
 

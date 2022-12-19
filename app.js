@@ -180,7 +180,7 @@ async function start() {
   }
 
   if (Number.isInteger(checkStatusJobIntervalMs)) {
-    ;(async function checkStatus() {
+    async function runCheckStatusJob() {
       logger.info({ reportChatId, retryMs }, 'Running automatic status check')
 
       try {
@@ -189,9 +189,11 @@ async function start() {
         logger.error(error, 'Could not check status automatically')
       } finally {
         logger.info({ checkStatusJobIntervalMs }, 'Scheduling next automatic status check')
-        setTimeout(checkStatus, checkStatusJobIntervalMs);
+        setTimeout(runCheckStatusJob, checkStatusJobIntervalMs);
       }
-    })()
+    }
+
+    await runCheckStatusJob()
   }
 }
 

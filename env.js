@@ -17,9 +17,9 @@ export const tpLinkPassword = require(process.env.TP_LINK_PASSWORD)
 export const tpLinkTerminalId = process.env.TP_LINK_TERMINAL_ID || 'my-outage-tracker-bot'
 export const databaseUrl = require(process.env.DATABASE_URL)
 export const checkStatusJobIntervalMs = process.env.CHECK_STATUS_JOB_INTERVAL_MS
-  ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : undefined
+  ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : 5 * 60_000
 export const retryAttempts = process.env.RETRY_ATTEMPTS
-  ? Number(process.env.RETRY_ATTEMPTS) : 6
+  ? Number(process.env.RETRY_ATTEMPTS) : 10
 export const retryMs = process.env.RETRY_MS
   ? Number(process.env.RETRY_MS) : 30_000
 export const notificationSoundDelayMs = process.env.NOTIFICATION_SOUND_DELAY_MS
