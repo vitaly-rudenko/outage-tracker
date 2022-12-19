@@ -1,3 +1,5 @@
+import { logger } from '../../../logger.js'
+import { RateLimitError } from '../../errors/RateLimitError.js'
 import { formatDuration } from '../../utils/date.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
@@ -15,32 +17,54 @@ export function nowCommand({ bot, statusCheckUseCase }) {
       parse_mode: 'MarkdownV2',
     })
 
-    const { status, latestStatusFirstChange } = await statusCheckUseCase.run({ retryIfOffline: false })
+    try {
+      const { status, latestStatusFirstChange } = await statusCheckUseCase.run({ retryIfOffline: false })
+  
+      let replyText
+      if (
+        !latestStatusFirstChange ||
+        latestStatusFirstChange.isOnline !== status.isOnline
+      ) {
+        replyText = status.isOnline
+          ? localize('becameOnline')
+          : localize('becameOffline')
+      } else {
+        const durationMs =
+          status.createdAt.getTime() -
+          latestStatusFirstChange.createdAt.getTime()
+  
+        replyText = status.isOnline
+          ? localize('stillOnline', { duration: escapeMd(formatDuration({ ms: durationMs, localize })) })
+          : localize('stillOffline', { duration: escapeMd(formatDuration({ ms: durationMs, localize })) })
+      }
+  
+      await bot.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        replyText,
+        { parse_mode: 'MarkdownV2' }
+      )
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        await bot.telegram.editMessageText(
+          message.chat.id,
+          message.message_id,
+          undefined,
+          localize('rateLimitError'),
+          { parse_mode: 'MarkdownV2' }
+        )
+      } else {
+        bot.telegram.editMessageText(
+          message.chat.id,
+          message.message_id,
+          undefined,
+          localize('unknownError'),
+          { parse_mode: 'MarkdownV2' }
+        ).catch(() => {})
 
-    let replyText
-    if (
-      !latestStatusFirstChange ||
-      latestStatusFirstChange.isOnline !== status.isOnline
-    ) {
-      replyText = status.isOnline
-        ? localize('becameOnline')
-        : localize('becameOffline')
-    } else {
-      const durationMs =
-        status.createdAt.getTime() -
-        latestStatusFirstChange.createdAt.getTime()
-
-      replyText = status.isOnline
-        ? localize('stillOnline', { duration: escapeMd(formatDuration({ ms: durationMs, localize })) })
-        : localize('stillOffline', { duration: escapeMd(formatDuration({ ms: durationMs, localize })) })
+        throw error
+      }
     }
-
-    await bot.telegram.editMessageText(
-      message.chat.id,
-      message.message_id,
-      undefined,
-      replyText,
-      { parse_mode: 'MarkdownV2' }
-    )
   }
 }

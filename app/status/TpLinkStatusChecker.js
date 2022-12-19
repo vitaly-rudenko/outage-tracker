@@ -1,5 +1,6 @@
 import { login } from 'tplink-cloud-api'
 import { logger } from '../../logger.js'
+import { RateLimitError } from '../errors/RateLimitError.js'
 import { Status } from './Status.js'
 
 export class TpLinkStatusChecker {
@@ -23,6 +24,10 @@ export class TpLinkStatusChecker {
         createdAt: new Date(),
       })
     } catch (error) {
+      if (error?.err?.code === -20004) {
+        throw new RateLimitError()
+      }
+
       logger.error(error, 'Could not check status, resetting the status checker')
       this._initializePromise = undefined
       throw error

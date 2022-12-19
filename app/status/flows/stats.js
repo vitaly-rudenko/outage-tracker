@@ -9,6 +9,7 @@ import { gatherDailyStats } from '../../gatherDailyStats.js'
 import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
 import { logger } from '../../../logger.js'
 import { timezoneOffsetMinutes } from '../../../env.js'
+import { RateLimitError } from '../../errors/RateLimitError.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
@@ -30,42 +31,63 @@ export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
     })
 
     try {
-      await statusCheckUseCase.run({ retryIfOffline: false })
+      try {
+        await statusCheckUseCase.run({ retryIfOffline: false })
+      } catch (error) {
+        if (!(error instanceof RateLimitError)) {
+          logger.error(
+            error,
+            'Could not run status check use case in /today command'
+          )
+        }
+      }
+
+      const now = new Date()
+      const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
+      const tomorrowStart = getTomorrowDate(todayStart)
+
+      const latestStatusBefore = await statusStorage.findLatestStatusBefore(
+        todayStart
+      )
+      const statuses = await statusStorage.findStatusesBetween({
+        startDateIncluding: todayStart,
+        endDateExcluding: tomorrowStart,
+      })
+
+      const dailyStats = gatherDailyStats({
+        dateStart: todayStart,
+        dateUntil: now,
+        statuses,
+        latestStatusBefore,
+        maxDurationMs,
+      })
+
+      await bot.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        formatDailyStats({
+          now,
+          timezoneOffsetMinutes,
+          dailyStats,
+          aggregateHours,
+          localize,
+        }),
+        { parse_mode: 'MarkdownV2' }
+      )
     } catch (error) {
-      logger.error(error, 'Could not run status check use case')
+      bot.telegram
+        .editMessageText(
+          message.chat.id,
+          message.message_id,
+          undefined,
+          localize('unknownError'),
+          { parse_mode: 'MarkdownV2' }
+        )
+        .catch(() => {})
+
+      throw error
     }
-
-    const now = new Date()
-    const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
-    const tomorrowStart = getTomorrowDate(todayStart)
-
-    const latestStatusBefore = await statusStorage.findLatestStatusBefore(todayStart)
-    const statuses = await statusStorage.findStatusesBetween({
-      startDateIncluding: todayStart,
-      endDateExcluding: tomorrowStart,
-    })
-
-    const dailyStats = gatherDailyStats({
-      dateStart: todayStart,
-      dateUntil: now,
-      statuses,
-      latestStatusBefore,
-      maxDurationMs,
-    })
-
-    await bot.telegram.editMessageText(
-      message.chat.id,
-      message.message_id,
-      undefined,
-      formatDailyStats({
-        now,
-        timezoneOffsetMinutes,
-        dailyStats,
-        aggregateHours,
-        localize,
-      }),
-      { parse_mode: 'MarkdownV2' }
-    )
   }
 }
 
@@ -85,40 +107,59 @@ export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
     })
 
     try {
-      await statusCheckUseCase.run({ retryIfOffline: false })
+      try {
+        await statusCheckUseCase.run({ retryIfOffline: false })
+      } catch (error) {
+        if (!(error instanceof RateLimitError)) {
+          logger.error(
+            error,
+            'Could not run status check use case in /week command'
+          )
+        }
+      }
+
+      const now = new Date()
+      const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
+      const tomorrowStart = getTomorrowDate(todayStart)
+      const startOfTheWeek = getOffsetDate(todayStart, -weeklyDays)
+
+      const statuses = await statusStorage.findStatusesBetween({
+        startDateIncluding: startOfTheWeek,
+        endDateExcluding: tomorrowStart,
+      })
+
+      const latestStatusBefore = await statusStorage.findLatestStatusBefore(
+        startOfTheWeek
+      )
+
+      const weeklyStats = gatherWeeklyStats({
+        dateStart: todayStart,
+        dateUntil: now,
+        days: weeklyDays,
+        statuses,
+        latestStatusBefore,
+        maxDurationMs,
+      })
+
+      await bot.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        formatWeeklyStats({ weeklyStats, aggregateHours, localize }),
+        { parse_mode: 'MarkdownV2' }
+      )
     } catch (error) {
-      logger.error(error, 'Could not run status check use case')
+      bot.telegram
+        .editMessageText(
+          message.chat.id,
+          message.message_id,
+          undefined,
+          localize('unknownError'),
+          { parse_mode: 'MarkdownV2' }
+        )
+        .catch(() => {})
+
+      throw error
     }
-
-    const now = new Date()
-    const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
-    const tomorrowStart = getTomorrowDate(todayStart)
-    const startOfTheWeek = getOffsetDate(todayStart, -weeklyDays)
-
-    const statuses = await statusStorage.findStatusesBetween({
-      startDateIncluding: startOfTheWeek,
-      endDateExcluding: tomorrowStart,
-    })
-
-    const latestStatusBefore = await statusStorage.findLatestStatusBefore(
-      startOfTheWeek
-    )
-
-    const weeklyStats = gatherWeeklyStats({
-      dateStart: todayStart,
-      dateUntil: now,
-      days: weeklyDays,
-      statuses,
-      latestStatusBefore,
-      maxDurationMs,
-    })
-
-    await bot.telegram.editMessageText(
-      message.chat.id,
-      message.message_id,
-      undefined,
-      formatWeeklyStats({ weeklyStats, aggregateHours, localize }),
-      { parse_mode: 'MarkdownV2' }
-    )
   }
 }
