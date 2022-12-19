@@ -13,7 +13,7 @@
     "test:watch": "nodemon -x 'npm run test'",
     "migrate": "npm run umzug db:migrate",
     "umzug": "node ./umzug/cli.js",
-    "deploy": "fly deploy && fly scale count 1",
+    "deploy": "fly scale count 0 && fly deploy && fly scale count 1",
     "undeploy": "fly scale count 0"
   },
   "repository": {

@@ -60,10 +60,20 @@ async function start() {
     reportChatId,
   })
 
-  process.once('SIGINT', () => bot.stop('SIGINT'))
-  process.once('SIGTERM', () => bot.stop('SIGTERM'))
+  process.once('SIGINT', () => {
+    logger.warn({}, 'Received SIGINT signal, shutting down')
+    bot.stop('SIGINT')
+    process.exit(0)
+  })
+
+  process.once('SIGTERM', () => {
+    logger.warn({}, 'Received SIGTERM signal, shutting down')
+    bot.stop('SIGTERM')
+    process.exit(0)
+  })
+
   process.on('unhandledRejection', (error) => {
-    errorLogger.log(error)
+    errorLogger.log(error, 'Unhandled rejection')
   })
 
   if (!useWebhooks) {
