@@ -4,10 +4,11 @@ import { escapeMd } from '../utils/escapeMd.js'
 import { Status } from './Status.js'
 
 export class StatusCheckUseCase {
-  constructor({ statusChecker, statusStorage, retryMs, localize, bot, reportChatId }) {
+  constructor({ statusChecker, statusStorage, retryMs, retryAttempts, localize, bot, reportChatId }) {
     this._statusChecker = statusChecker
     this._statusStorage = statusStorage
     this._retryMs = retryMs
+    this._retryAttempts = retryAttempts
     this._localize = localize
     this._bot = bot
     this._reportChatId = reportChatId
@@ -19,16 +20,7 @@ export class StatusCheckUseCase {
    * @returns {Promise<{ status: Status, latestStatusFirstChange: Status }>}
    */
   async run({ retryIfOffline }) {
-    logger.info({}, 'Fetching current status')
-    let status = await this._statusChecker.check()
-
-    if (!status.isOnline && retryIfOffline) {
-      logger.info({ retryMs: this._retryMs }, 'Current status is offline, retrying in a moment')
-      await new Promise((resolve) => setTimeout(resolve, this._retryMs))
-
-      logger.info({}, 'Fetching current status again')
-      status = await this._statusChecker.check()
-    }
+    const status = await this._fetchCurrentStatus({ retryIfOffline })
 
     logger.info({}, 'Fetching the latest status first change')
     const latestStatusFirstChange =
@@ -44,6 +36,28 @@ export class StatusCheckUseCase {
     }
 
     return { status, latestStatusFirstChange }
+  }
+
+  /** @returns {Promise<import('./Status').Status>} */
+  async _fetchCurrentStatus({ retryIfOffline }) {
+    logger.info({}, 'Fetching current status')
+    let status = await this._statusChecker.check()
+
+    if (!status.isOnline && retryIfOffline) {
+      for (let retryAttempt = 1; retryAttempt <= this._retryAttempts; retryAttempt++) {
+        logger.info({ retryAttempt, retryMs: this._retryMs }, 'Current status is offline, retrying in a moment')
+        await new Promise((resolve) => setTimeout(resolve, this._retryMs))
+  
+        logger.info({}, 'Fetching current status again')
+        status = await this._statusChecker.check()
+
+        if (status.isOnline) {
+          return status
+        }
+      }
+    }
+
+    return status
   }
 
   async _notifyIfNecessary({ status, latestStatusFirstChange }) {

@@ -12,6 +12,7 @@ import {
   tpLinkPassword,
   tpLinkTerminalId,
   tpLinkUsername,
+  retryAttempts,
 } from '../env.js'
 import { logger } from '../logger.js'
 
@@ -35,6 +36,7 @@ async function run() {
     bot,
     localize: localizeDefault,
     retryMs,
+    retryAttempts,
     statusChecker,
     statusStorage,
     reportChatId,

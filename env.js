@@ -18,8 +18,10 @@ export const tpLinkTerminalId = process.env.TP_LINK_TERMINAL_ID || 'my-outage-tr
 export const databaseUrl = require(process.env.DATABASE_URL)
 export const checkStatusJobIntervalMs = process.env.CHECK_STATUS_JOB_INTERVAL_MS
   ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : undefined
+export const retryAttempts = process.env.RETRY_ATTEMPTS
+  ? Number(process.env.RETRY_ATTEMPTS) : 10
 export const retryMs = process.env.RETRY_MS
-  ? Number(process.env.RETRY_MS) : 30_000
+  ? Number(process.env.RETRY_MS) : 18_000
 export const logLevel = process.env.LOG_LEVEL || 'info'
 
 function require(value) {

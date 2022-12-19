@@ -16,6 +16,7 @@ import {
   tpLinkTerminalId,
   tpLinkUsername,
   useWebhooks,
+  retryAttempts,
 } from './env.js'
 import { withLanguage } from './app/localize.js'
 import { StatusPostgresStorage } from './app/status/StatusPostgresStorage.js'
@@ -50,6 +51,7 @@ async function start() {
   const statusCheckUseCase = new StatusCheckUseCase({
     bot,
     localize: localizeDefault,
+    retryAttempts,
     retryMs,
     statusChecker,
     statusStorage,
