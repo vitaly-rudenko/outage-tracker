@@ -19,11 +19,13 @@ export const databaseUrl = require(process.env.DATABASE_URL)
 export const checkStatusJobIntervalMs = process.env.CHECK_STATUS_JOB_INTERVAL_MS
   ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : undefined
 export const retryAttempts = process.env.RETRY_ATTEMPTS
-  ? Number(process.env.RETRY_ATTEMPTS) : 10
+  ? Number(process.env.RETRY_ATTEMPTS) : 6
 export const retryMs = process.env.RETRY_MS
-  ? Number(process.env.RETRY_MS) : 18_000
+  ? Number(process.env.RETRY_MS) : 30_000
 export const notificationSoundDelayMs = process.env.NOTIFICATION_SOUND_DELAY_MS
   ? Number(process.env.NOTIFICATION_SOUND_DELAY_MS) : 60 * 60_000
+export const timezoneOffsetMinutes = process.env.TIMEZONE_OFFSET_MINUTES
+  ? Number(process.env.TIMEZONE_OFFSET_MINUTES) : -120
 export const logLevel = process.env.LOG_LEVEL || 'info'
 
 function require(value) {

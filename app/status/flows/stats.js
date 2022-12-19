@@ -1,9 +1,14 @@
-import { getStartOfTheDay, getTomorrowDate, getOffsetDate } from '../../utils/date.js'
+import {
+  getStartOfTheDay,
+  getTomorrowDate,
+  getOffsetDate,
+} from '../../utils/date.js'
 import { formatDailyStats } from '../../formatDailyStats.js'
 import { formatWeeklyStats } from '../../formatWeeklyStats.js'
 import { gatherDailyStats } from '../../gatherDailyStats.js'
 import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
 import { logger } from '../../../logger.js'
+import { timezoneOffsetMinutes } from '../../../env.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
@@ -14,7 +19,7 @@ const weeklyDays = 7
  *   bot: import('telegraf').Telegraf,
  *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
-* }} dependencies 
+ * }} dependencies
  */
 export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
   return async (context) => {
@@ -31,17 +36,18 @@ export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
     }
 
     const now = new Date()
-    const today = getStartOfTheDay(now)
-    const tomorrow = getTomorrowDate(today)
-    const latestStatusBefore = await statusStorage.findLatestStatusBefore(today)
+    const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
+    const tomorrowStart = getTomorrowDate(todayStart)
+
+    const latestStatusBefore = await statusStorage.findLatestStatusBefore(todayStart)
     const statuses = await statusStorage.findStatusesBetween({
-      startDateIncluding: today,
-      endDateExcluding: tomorrow,
+      startDateIncluding: todayStart,
+      endDateExcluding: tomorrowStart,
     })
 
     const dailyStats = gatherDailyStats({
-      date: now,
-      until: true,
+      dateStart: todayStart,
+      dateUntil: now,
       statuses,
       latestStatusBefore,
       maxDurationMs,
@@ -51,7 +57,13 @@ export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
       message.chat.id,
       message.message_id,
       undefined,
-      formatDailyStats({ date: today, dailyStats, aggregateHours, localize }),
+      formatDailyStats({
+        now,
+        timezoneOffsetMinutes,
+        dailyStats,
+        aggregateHours,
+        localize,
+      }),
       { parse_mode: 'MarkdownV2' }
     )
   }
@@ -62,7 +74,7 @@ export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
  *   bot: import('telegraf').Telegraf,
  *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
- * }} dependencies 
+ * }} dependencies
  */
 export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
   return async (context) => {
@@ -79,13 +91,13 @@ export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
     }
 
     const now = new Date()
-    const today = getStartOfTheDay(now)
-    const tomorrow = getTomorrowDate(today)
-    const startOfTheWeek = getOffsetDate(today, -weeklyDays)
+    const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
+    const tomorrowStart = getTomorrowDate(todayStart)
+    const startOfTheWeek = getOffsetDate(todayStart, -weeklyDays)
 
     const statuses = await statusStorage.findStatusesBetween({
       startDateIncluding: startOfTheWeek,
-      endDateExcluding: tomorrow,
+      endDateExcluding: tomorrowStart,
     })
 
     const latestStatusBefore = await statusStorage.findLatestStatusBefore(
@@ -93,9 +105,9 @@ export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
     )
 
     const weeklyStats = gatherWeeklyStats({
-      date: now,
+      dateStart: todayStart,
+      dateUntil: now,
       days: weeklyDays,
-      until: true,
       statuses,
       latestStatusBefore,
       maxDurationMs,

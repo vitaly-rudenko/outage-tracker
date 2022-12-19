@@ -1,8 +1,19 @@
-import { getStartOfTheDay } from './utils/date.js'
+import { time } from './utils/date.js'
 
+const HOUR_MS = 60 * 60_000
+
+/**
+ * @param {{
+ *   dateStart: Date,
+ *   dateUntil?: Date,
+ *   statuses: import('./status/Status').Status[],
+ *   latestStatusBefore?: import('./status/Status').Status,
+ *   maxDurationMs: Number,
+ * }} input 
+ */
 export function gatherDailyStats({
-  date,
-  until,
+  dateStart,
+  dateUntil = undefined,
   statuses,
   latestStatusBefore,
   maxDurationMs,
@@ -11,18 +22,19 @@ export function gatherDailyStats({
   let onlineMs = 0
   let totalMs = 0
 
+  const hourUntil = dateUntil
+    ? Math.floor((time(dateUntil) - time(dateStart)) / (60 * 60_000))
+    : 24
+
   for (let hour = 0; hour < 24; hour++) {
-    const thisHourStart = getStartOfTheDay(date)
-    thisHourStart.setHours(hour)
+    const thisHourStart = new Date(time(dateStart) + hour * HOUR_MS)
+    let nextHourStart = new Date(time(dateStart) + (hour + 1) * HOUR_MS)
 
-    let nextHourStart = getStartOfTheDay(date)
-    nextHourStart.setHours(hour + 1)
-
-    if (until) {
-      if (hour > date.getHours()) {
+    if (dateUntil) {
+      if (hour > hourUntil) {
         nextHourStart = thisHourStart
-      } else if (hour === date.getHours()) {
-        nextHourStart = date
+      } else if (hour === hourUntil) {
+        nextHourStart = dateUntil
       }
     }
 
@@ -79,12 +91,4 @@ export function gatherDailyStats({
     onlineMs,
     totalMs,
   }
-}
-
-function time(dateOrStatus) {
-  return getDate(dateOrStatus).getTime()
-}
-
-function getDate(dateOrStatus) {
-  return 'createdAt' in dateOrStatus ? dateOrStatus.createdAt : dateOrStatus
 }

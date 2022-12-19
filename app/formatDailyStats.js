@@ -3,7 +3,8 @@ import { formatDuration } from './utils/date.js'
 import { escapeMd } from './utils/escapeMd.js'
 
 export function formatDailyStats({
-  date,
+  now,
+  timezoneOffsetMinutes,
   dailyStats,
   aggregateHours,
   localize,
@@ -11,7 +12,7 @@ export function formatDailyStats({
   const { totalMs, onlineMs, perHour } = dailyStats
 
   return localize('daily.message', {
-    date: escapeMd(formatDate(date)),
+    date: escapeMd(formatDate(now, timezoneOffsetMinutes)),
     onlineDuration: escapeMd(formatDuration({ ms: onlineMs, localize })),
     offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
     hours: Array.from(
@@ -48,10 +49,12 @@ export function formatDailyStats({
   })
 }
 
-function formatDate(date) {
-  return `${String(date.getDate()).padStart(2, '0')}.${String(
-    date.getMonth() + 1
-  ).padStart(2, '0')}.${date.getFullYear()}`
+function formatDate(date, timezoneOffsetMinutes) {
+  const offsetDate = new Date(date.getTime() - timezoneOffsetMinutes * 60_000)
+
+  return `${String(offsetDate.getUTCDate()).padStart(2, '0')}.${String(
+    offsetDate.getUTCMonth() + 1
+  ).padStart(2, '0')}.${offsetDate.getUTCFullYear()}`
 }
 
 function formatHours(from, to) {

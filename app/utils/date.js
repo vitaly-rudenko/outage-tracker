@@ -3,9 +3,7 @@ export function getTomorrowDate(date) {
 }
 
 export function getOffsetDate(date, days) {
-  const offsetDate = new Date(date)
-  offsetDate.setDate(offsetDate.getDate() + days)
-  return offsetDate
+  return new Date(date.getTime() + days * 24 * 60 * 60_000)
 }
 
 export function formatDuration({ ms, localize }) {
@@ -28,11 +26,19 @@ export function formatDuration({ ms, localize }) {
   return localize('duration.minutes', { duration })
 }
 
-export function getStartOfTheDay(date) {
+export function getStartOfTheDay(date, timezoneOffsetMinutes) {
   const updateDate = new Date(date)
-  updateDate.setHours(0)
-  updateDate.setMinutes(0)
-  updateDate.setSeconds(0)
-  updateDate.setMilliseconds(0)
-  return updateDate
+  updateDate.setUTCHours(0)
+  updateDate.setUTCMinutes(0)
+  updateDate.setUTCSeconds(0)
+  updateDate.setUTCMilliseconds(0)
+  return new Date(updateDate.getTime() + timezoneOffsetMinutes * 60_000)
+}
+
+export function time(dateOrStatus) {
+  return getDate(dateOrStatus).getTime()
+}
+
+export function getDate(dateOrStatus) {
+  return 'createdAt' in dateOrStatus ? dateOrStatus.createdAt : dateOrStatus
 }

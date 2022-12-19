@@ -1,10 +1,20 @@
 import { gatherDailyStats } from './gatherDailyStats.js'
-import { getStartOfTheDay } from './utils/date.js'
+import { time } from './utils/date.js'
 
+/**
+ * @param {{
+ *   dateStart: Date,
+ *   dateUntil?: Date,
+ *   days: number,
+ *   statuses: import('./status/Status').Status[],
+ *   latestStatusBefore?: import('./status/Status').Status,
+ *   maxDurationMs: Number,
+ * }} input 
+ */
 export function gatherWeeklyStats({
-  date,
+  dateStart,
+  dateUntil,
   days,
-  until = false,
   statuses,
   latestStatusBefore,
   maxDurationMs = Infinity,
@@ -12,18 +22,18 @@ export function gatherWeeklyStats({
   const perDay = []
 
   for (let offset = 0; offset < days; offset++) {
-    const today = new Date(date)
-    today.setDate(date.getDate() - offset)
+    const thisDateStart = new Date(dateStart.getTime() - offset * 24 * 60 * 60_000)
+    const nextDateStart = new Date(dateStart.getTime() - (offset - 1) * 24 * 60 * 60_000)
 
     const dailyStats = gatherDailyStats({
-      date: today,
-      until: until && offset === 0,
-      statuses: statuses.filter(s => s.createdAt.getDate() === today.getDate()),
-      latestStatusBefore: statuses.filter(s => s.createdAt.getTime() < getStartOfTheDay(today).getTime()).pop() || latestStatusBefore,
+      dateStart: thisDateStart,
+      dateUntil: offset === 0 ? dateUntil : undefined,
+      statuses: statuses.filter(s => time(s) >= time(thisDateStart) && time(s) < time(nextDateStart)),
+      latestStatusBefore: statuses.filter(s => time(s) < time(thisDateStart)).pop() || latestStatusBefore,
       maxDurationMs,
     })
 
-    perDay.unshift({ date: today, day: days - offset, dailyStats })
+    perDay.unshift({ date: thisDateStart, day: days - offset, dailyStats })
   }
 
   return {
