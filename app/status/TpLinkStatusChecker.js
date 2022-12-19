@@ -6,6 +6,7 @@ import { Status } from './Status.js'
 export class TpLinkStatusChecker {
   _initializePromise
   _tpLink
+  _offlineStatuses = 0
 
   constructor({ username, password }) {
     this._username = username
@@ -18,13 +19,24 @@ export class TpLinkStatusChecker {
   
       const devices = await this._tpLink.getDeviceList();
       logger.debug({ devices }, 'TP-Link device list has been fetched')
+
+      const isOnline = devices.some(device => device.status === 1)
+      if (!isOnline) {
+        this._offlineStatuses++
+        if (this._offlineStatuses === 5) {
+          logger.debug({}, 'Too many offline statuses in a row, logging out')
+          this._offlineStatuses = 0
+          this._initializePromise = undefined
+        }
+      }
   
       return new Status({
         raw: devices,
-        isOnline: devices.some(device => device.status === 1),
+        isOnline,
         createdAt: new Date(),
       })
     } catch (error) {
+      logger.debug(error, 'Failed to check status, logging out')
       this._initializePromise = undefined
 
       if (error?.err?.code === -20004) {
