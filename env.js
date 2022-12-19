@@ -16,7 +16,7 @@ export const tpLinkUsername = require(process.env.TP_LINK_USERNAME)
 export const tpLinkPassword = require(process.env.TP_LINK_PASSWORD)
 export const databaseUrl = require(process.env.DATABASE_URL)
 export const checkStatusJobIntervalMs = process.env.CHECK_STATUS_JOB_INTERVAL_MS
-  ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : 5 * 60_000
+  ? Number(process.env.CHECK_STATUS_JOB_INTERVAL_MS) : 60_000
 export const retryAttempts = process.env.RETRY_ATTEMPTS
   ? Number(process.env.RETRY_ATTEMPTS) : 10
 export const retryMs = process.env.RETRY_MS
