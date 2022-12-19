@@ -181,7 +181,9 @@ async function start() {
   } else {
     logger.info({}, 'Telegram bot started')
 
-    bot.launch().catch((error) => {
+    bot.launch({
+      dropPendingUpdates: true,
+    }).catch((error) => {
       logger.error(error, 'Could not launch the bot')
       process.exit(1)
     })
