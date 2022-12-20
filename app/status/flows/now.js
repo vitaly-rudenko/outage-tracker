@@ -1,4 +1,3 @@
-import { logger } from '../../../logger.js'
 import { RateLimitError } from '../../errors/RateLimitError.js'
 import { formatDuration } from '../../utils/date.js'
 import { escapeMd } from '../../utils/escapeMd.js'
@@ -6,10 +5,11 @@ import { escapeMd } from '../../utils/escapeMd.js'
 /**
  * @param {{
  *   bot: import('telegraf').Telegraf,
- *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
+ *   statusChecker: import('../TpLinkStatusChecker').TpLinkStatusChecker,
+ *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies 
  */
-export function nowCommand({ bot, statusCheckUseCase }) {
+export function nowCommand({ bot, statusChecker, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -18,7 +18,8 @@ export function nowCommand({ bot, statusCheckUseCase }) {
     })
 
     try {
-      const { status, latestStatusFirstChange } = await statusCheckUseCase.run({ retryIfOffline: false })
+      const status = await statusChecker.check()
+      const latestStatusFirstChange = await statusStorage.findLatestStatusFirstChange()
   
       let replyText
       if (

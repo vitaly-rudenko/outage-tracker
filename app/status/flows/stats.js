@@ -7,9 +7,7 @@ import { formatDailyStats } from '../../formatDailyStats.js'
 import { formatWeeklyStats } from '../../formatWeeklyStats.js'
 import { gatherDailyStats } from '../../gatherDailyStats.js'
 import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
-import { logger } from '../../../logger.js'
 import { timezoneOffsetMinutes } from '../../../env.js'
-import { RateLimitError } from '../../errors/RateLimitError.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 2
@@ -18,11 +16,10 @@ const weeklyDays = 7
 /**
  * @param {{
  *   bot: import('telegraf').Telegraf,
- *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies
  */
-export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
+export function todayCommand({ bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -31,17 +28,6 @@ export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
     })
 
     try {
-      try {
-        await statusCheckUseCase.run({ retryIfOffline: false })
-      } catch (error) {
-        if (!(error instanceof RateLimitError)) {
-          logger.error(
-            error,
-            'Could not run status check use case in /today command'
-          )
-        }
-      }
-
       const now = new Date()
       const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
       const tomorrowStart = getTomorrowDate(todayStart)
@@ -94,11 +80,10 @@ export function todayCommand({ bot, statusCheckUseCase, statusStorage }) {
 /**
  * @param {{
  *   bot: import('telegraf').Telegraf,
- *   statusCheckUseCase: import('../StatusCheckUseCase').StatusCheckUseCase,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies
  */
-export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
+export function weekCommand({ bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -107,17 +92,6 @@ export function weekCommand({ bot, statusCheckUseCase, statusStorage }) {
     })
 
     try {
-      try {
-        await statusCheckUseCase.run({ retryIfOffline: false })
-      } catch (error) {
-        if (!(error instanceof RateLimitError)) {
-          logger.error(
-            error,
-            'Could not run status check use case in /week command'
-          )
-        }
-      }
-
       const now = new Date()
       const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
       const tomorrowStart = getTomorrowDate(todayStart)

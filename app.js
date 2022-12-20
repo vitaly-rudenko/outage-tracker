@@ -89,9 +89,9 @@ async function start() {
     }
   })
 
-  bot.command('now', nowCommand({ bot, statusCheckUseCase }))
-  bot.command('today', todayCommand({ bot, statusCheckUseCase, statusStorage }))
-  bot.command('week', weekCommand({ bot, statusCheckUseCase, statusStorage }))
+  bot.command('now', nowCommand({ bot, statusChecker, statusStorage }))
+  bot.command('today', todayCommand({ bot, statusStorage }))
+  bot.command('week', weekCommand({ bot, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
 
   logger.info({}, 'Starting telegram bot')
