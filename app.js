@@ -69,16 +69,7 @@ async function start() {
     { command: 'week', description: localizeDefault('commands.week') },
     { command: 'version', description: localizeDefault('commands.version') },
   ])
-
-  bot.use(withLocalization())
-  bot.command('version', versionCommand())
-
-  bot.use((context, next) => {
-    if (context.chat?.type === 'private') {
-      return next()
-    }
-  })
-
+  
   if (allowCommandsToAdminOnly) {
     bot.use(async (context, next) => {
       if (context.from && String(context.from.id) === adminUserId) {
@@ -88,6 +79,15 @@ async function start() {
       await context.reply(localizeDefault('onlyAdminIsAllowed'))
     })
   }
+
+  bot.use(withLocalization())
+  bot.command('version', versionCommand())
+
+  bot.use((context, next) => {
+    if (context.chat?.type === 'private') {
+      return next()
+    }
+  })
 
   bot.command('now', nowCommand({ bot, statusCheckUseCase }))
   bot.command('today', todayCommand({ bot, statusCheckUseCase, statusStorage }))
