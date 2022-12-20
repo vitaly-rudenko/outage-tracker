@@ -70,6 +70,8 @@ async function start() {
     { command: 'version', description: localizeDefault('commands.version') },
   ])
 
+  bot.command('version', versionCommand())
+
   bot.use((context, next) => {
     if (context.chat?.type === 'private') {
       return next()
@@ -87,7 +89,6 @@ async function start() {
   }
 
   bot.use(withLocalization())
-  bot.command('version', versionCommand())
   bot.command('now', nowCommand({ bot, statusCheckUseCase }))
   bot.command('today', todayCommand({ bot, statusCheckUseCase, statusStorage }))
   bot.command('week', weekCommand({ bot, statusCheckUseCase, statusStorage }))
