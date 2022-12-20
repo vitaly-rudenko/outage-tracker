@@ -10,7 +10,7 @@ import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
 import { timezoneOffsetMinutes } from '../../../env.js'
 
 const maxDurationMs = 10 * 60_000
-const aggregateHours = 2
+const aggregateHours = 1
 const weeklyDays = 7
 
 /**
