@@ -34,13 +34,15 @@ export function getStartOfTheDay(date, timezoneOffsetMinutes) {
   const offsetDate = new Date(date.getTime() - timezoneOffsetMinutes * 60_000)
 
   return new Date(
-    offsetDate.getUTCFullYear(),
-    offsetDate.getUTCMonth(),
-    offsetDate.getUTCDate(),
-    0,
-    0,
-    0,
-    0,
+    Date.UTC(
+      offsetDate.getUTCFullYear(),
+      offsetDate.getUTCMonth(),
+      offsetDate.getUTCDate(),
+      0,
+      timezoneOffsetMinutes,
+      0,
+      0,
+    )
   )
 }
 

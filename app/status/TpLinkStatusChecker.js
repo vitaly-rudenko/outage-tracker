@@ -39,7 +39,7 @@ export class TpLinkStatusChecker {
       logger.debug(error, 'Failed to check status, logging out')
       this._initializePromise = undefined
 
-      if (error?.err?.code === -20004) {
+      if (error.errorCode === -20004) {
         throw new RateLimitError()
       } else {
         logger.error(error, 'Could not run check status use case')
