@@ -8,7 +8,7 @@ services:
     depends_on:
       - otr_postgres
     environment:
-      USE_NATIVE_ENV: "true"
+      LOG_LEVEL: "$LOG_LEVEL"
       DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
       ADMIN_USER_ID: "$ADMIN_USER_ID"
       ALLOW_COMMANDS_TO_ADMIN_ONLY: "$ALLOW_COMMANDS_TO_ADMIN_ONLY"
@@ -16,6 +16,7 @@ services:
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       TP_LINK_USERNAME: "$TP_LINK_USERNAME"
       TP_LINK_PASSWORD: "$TP_LINK_PASSWORD"
+      USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://user:p4ssw0rd@otr_postgres:5432/outage_tracker"
 
   otr_postgres:
