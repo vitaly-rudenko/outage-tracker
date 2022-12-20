@@ -63,9 +63,10 @@ export class StatusCheckUseCase {
   /** @returns {Promise<import('./Status').Status>} */
   async _fetchCurrentStatus({ retryIfOffline }) {
     logger.debug({}, 'Fetching current status')
-    let status = await this._statusChecker.check()
+    const firstStatus = await this._statusChecker.check()
+    if (firstStatus.isOnline) return firstStatus
 
-    if (!status.isOnline && retryIfOffline) {
+    if (retryIfOffline) {
       for (
         let retryAttempt = 1;
         retryAttempt <= this._retryAttempts;
@@ -78,15 +79,15 @@ export class StatusCheckUseCase {
         await new Promise((resolve) => setTimeout(resolve, this._retryMs))
 
         logger.debug({}, 'Fetching current status again')
-        status = await this._statusChecker.check()
+        const currentStatus = await this._statusChecker.check()
 
-        if (status.isOnline) {
-          return status
+        if (currentStatus.isOnline) {
+          return currentStatus
         }
       }
     }
 
-    return status
+    return firstStatus
   }
 
   async _notifyIfNecessary({ status, latestStatusFirstChange }) {
