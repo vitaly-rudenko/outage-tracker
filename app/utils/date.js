@@ -26,13 +26,22 @@ export function formatDuration({ ms, localize }) {
   return localize('duration.minutes', { duration })
 }
 
+/**
+ * @param {Date} date 
+ * @param {number} timezoneOffsetMinutes 
+ */
 export function getStartOfTheDay(date, timezoneOffsetMinutes) {
-  const updateDate = new Date(date)
-  updateDate.setUTCHours(0)
-  updateDate.setUTCMinutes(0)
-  updateDate.setUTCSeconds(0)
-  updateDate.setUTCMilliseconds(0)
-  return new Date(updateDate.getTime() + timezoneOffsetMinutes * 60_000)
+  const offsetDate = new Date(date.getTime() - timezoneOffsetMinutes * 60_000)
+
+  return new Date(
+    offsetDate.getUTCFullYear(),
+    offsetDate.getUTCMonth(),
+    offsetDate.getUTCDate(),
+    0,
+    0,
+    0,
+    0,
+  )
 }
 
 export function time(dateOrStatus) {

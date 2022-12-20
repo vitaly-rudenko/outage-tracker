@@ -28,7 +28,7 @@ import { StatusCheckUseCase } from './app/status/StatusCheckUseCase.js'
 async function start() {
   const localizeDefault = withLanguage('uk')
 
-  logger.info({}, 'Connecting to Postgres')
+  logger.info({}, 'Connecting to postgres')
   const pgClient = new pg.Client(databaseUrl)
   await pgClient.connect()
 
@@ -55,18 +55,8 @@ async function start() {
     reportChatId,
   })
 
-  process.once('SIGINT', () => {
-    logger.warn({}, 'Received SIGINT signal, shutting down')
-    bot.stop('SIGINT')
-    process.exit(0)
-  })
-
-  process.once('SIGTERM', () => {
-    logger.warn({}, 'Received SIGTERM signal, shutting down')
-    bot.stop('SIGTERM')
-    process.exit(0)
-  })
-
+  process.once('SIGINT', () => bot.stop('SIGINT'))
+  process.once('SIGTERM', () => bot.stop('SIGTERM'))
   process.on('unhandledRejection', (error) => {
     errorLogger.log(error, 'Unhandled rejection')
   })
@@ -103,8 +93,12 @@ async function start() {
   bot.command('week', weekCommand({ bot, statusCheckUseCase, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
 
-  await bot.launch()
-  logger.info({}, 'Telegram bot started')
+  logger.info({}, 'Starting telegram bot')
+  bot.launch()
+    .catch((error) => {
+      logger.error(error, 'Could not launch telegram bot')
+      process.exit(1)
+    })
 
   if (Number.isInteger(checkStatusJobIntervalMs)) {
     async function runCheckStatusJob() {

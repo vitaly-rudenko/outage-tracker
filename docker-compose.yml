@@ -1,12 +1,12 @@
 version: '3.7'
 services:
-  app:
-    container_name: app
+  otr_app:
+    container_name: otr_app
     build:
       context: .
       dockerfile: docker/Dockerfile
     depends_on:
-      - postgres
+      - otr_postgres
     environment:
       USE_NATIVE_ENV: "true"
       DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
@@ -16,12 +16,14 @@ services:
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       TP_LINK_USERNAME: "$TP_LINK_USERNAME"
       TP_LINK_PASSWORD: "$TP_LINK_PASSWORD"
-      DATABASE_URL: "$DATABASE_URL"
+      DATABASE_URL: "postgres://user:p4ssw0rd@otr_postgres:5432/outage_tracker"
 
-  postgres:
-    container_name: postgres
+  otr_postgres:
+    container_name: otr_postgres
     image: postgres:13-alpine
     environment:
       POSTGRES_DB: "outage_tracker"
       POSTGRES_USER: "user"
       POSTGRES_PASSWORD: "p4ssw0rd"
+    ports:
+      - "5432:5432"
