@@ -58,6 +58,10 @@ function formatDate(date, timezoneOffsetMinutes) {
 }
 
 function formatHours(from, to) {
+  if (from === to) {
+    return `${String(from).padStart(2, '0')}:00`
+  }
+
   return `${String(from).padStart(2, '0')}:00–${String(to).padStart(
     2,
     '0'
