@@ -14,19 +14,19 @@ const maxDurationMs = 10 * 60_000
 const aggregateHours = 1
 const weeklyDays = 7
 
-export function yesterdayCommand({ bot, statusStorage }) {
+export function todayCommand({ bot, statusStorage }) {
   return createDailyHandler({
-    date: new Date(Date.now() - 24 * 60 * 60_000),
-    until: false,
+    date: new Date(),
+    until: true,
     bot,
     statusStorage,
   })
 }
 
-export function todayCommand({ bot, statusStorage }) {
+export function yesterdayCommand({ bot, statusStorage }) {
   return createDailyHandler({
-    date: new Date(),
-    until: true,
+    date: new Date(Date.now() - 24 * 60 * 60_000),
+    until: false,
     bot,
     statusStorage,
   })
@@ -44,24 +44,24 @@ export function createDailyHandler({ date, until, bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
-    const message = await context.reply(localize('fetchingStatus'), {
+    const message = await context.reply(localize('gatheringStats'), {
       parse_mode: 'MarkdownV2',
     })
 
     try {
-      const thisDayStart = getStartOfTheDay(date, timezoneOffsetMinutes)
-      const nextDayStart = getTomorrowDate(thisDayStart)
+      const thisDateStart = getStartOfTheDay(date, timezoneOffsetMinutes)
+      const nextDateStart = getTomorrowDate(thisDateStart)
 
       const latestStatusBefore = await statusStorage.findLatestStatusBefore(
-        thisDayStart
+        thisDateStart
       )
       const statuses = await statusStorage.findStatusesBetween({
-        startDateIncluding: thisDayStart,
-        endDateExcluding: nextDayStart,
+        startDateIncluding: thisDateStart,
+        endDateExcluding: nextDateStart,
       })
 
       const dailyStats = gatherDailyStats({
-        dateStart: thisDayStart,
+        dateStart: thisDateStart,
         ...until && { dateUntil: date },
         statuses,
         latestStatusBefore,
@@ -71,7 +71,7 @@ export function createDailyHandler({ date, until, bot, statusStorage }) {
       const records = getRecords({
         latestStatusBefore,
         statuses,
-        dateUntil: until ? date : nextDayStart,
+        dateUntil: until ? date : nextDateStart,
       })
 
       await bot.telegram.editMessageText(
@@ -114,7 +114,7 @@ export function weekCommand({ bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
-    const message = await context.reply(localize('fetchingStatus'), {
+    const message = await context.reply(localize('gatheringStats'), {
       parse_mode: 'MarkdownV2',
     })
 

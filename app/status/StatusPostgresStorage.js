@@ -33,6 +33,12 @@ export class StatusPostgresStorage {
     }
   }
 
+  async deleteAllStatuses() {
+    await this._client.query(`
+      DELETE FROM status;
+    `)
+  }
+
   /** @returns {Promise<Status | undefined>} */
   async findLatestStatusFirstChange() {
     const response = await this._client.query(`

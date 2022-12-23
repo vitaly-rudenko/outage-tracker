@@ -10,10 +10,12 @@
     "today": "Статистика за сьогодні",
     "yesterday": "Статистика за вчора",
     "week": "Статистика за останні 7 днів",
-    "start": "Розпочати роботу з ботом",
+    "export": "Створити бекап",
+    "import": "Завантажити бекап",
     "version": "Версія"
   },
   "fetchingStatus": "⏳ Отримуємо поточний статус\\.\\.\\.",
+  "gatheringStats": "⏳ Збираємо статистику\\.\\.\\.",
   "becameOnline": "✅ Онлайн",
   "becameOffline": "❌ Офлайн",
   "becameOnlineAfter": "✅ Онлайн після *{duration}* офлайну",
@@ -47,6 +49,13 @@
     ],
     "line": "{icons} {time}",
     "lineWithPercentage": "{icons} {time} | {percentage}%"
+  },
+  "export": {
+    "loading": "⏳ Створюємо бекап\\.\\.\\."
+  },
+  "import": {
+    "loading": "⏳ Завантажуємо бекап\\.\\.\\.",
+    "done": "✅ Імпортовано {count} статусів"
   },
   "duration": {
     "hours": "{duration} год.",

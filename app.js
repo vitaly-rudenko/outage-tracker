@@ -24,6 +24,7 @@ import { nowCommand } from './app/status/flows/now.js'
 import { todayCommand, weekCommand, yesterdayCommand } from './app/status/flows/stats.js'
 import { TpLinkStatusChecker } from './app/status/TpLinkStatusChecker.js'
 import { StatusCheckUseCase } from './app/status/StatusCheckUseCase.js'
+import { exportCommand, importCommand } from './app/status/flows/export.js'
 
 async function start() {
   const localizeDefault = withLanguage('uk')
@@ -68,6 +69,8 @@ async function start() {
     { command: 'yesterday', description: localizeDefault('commands.yesterday') },
     { command: 'today', description: localizeDefault('commands.today') },
     { command: 'week', description: localizeDefault('commands.week') },
+    { command: 'export', description: localizeDefault('commands.export') },
+    { command: 'import', description: localizeDefault('commands.import') },
     { command: 'version', description: localizeDefault('commands.version') },
   ])
   
@@ -94,6 +97,8 @@ async function start() {
   bot.command('yesterday', yesterdayCommand({ bot, statusStorage }))
   bot.command('today', todayCommand({ bot, statusStorage }))
   bot.command('week', weekCommand({ bot, statusStorage }))
+  bot.command('export', exportCommand({ bot, statusStorage }))
+  bot.command('import', importCommand({ bot, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
 
   logger.info({}, 'Starting telegram bot')
