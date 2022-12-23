@@ -8,18 +8,32 @@ import { formatWeeklyStats } from '../../formatWeeklyStats.js'
 import { gatherDailyStats } from '../../gatherDailyStats.js'
 import { gatherWeeklyStats } from '../../gatherWeeklyStats.js'
 import { timezoneOffsetMinutes } from '../../../env.js'
+import { getRecords } from '../../getRecords.js'
 
 const maxDurationMs = 10 * 60_000
 const aggregateHours = 1
 const weeklyDays = 7
 
+export function yesterdayCommand({ bot, statusStorage }) {
+  return createDailyHandler({
+    date: new Date(Date.now() - 24 * 60 * 60_000),
+    bot,
+    statusStorage,
+  })
+}
+
+export function todayCommand({ bot, statusStorage }) {
+  return createDailyHandler({ date: new Date(), bot, statusStorage })
+}
+
 /**
  * @param {{
+ *   date: Date,
  *   bot: import('telegraf').Telegraf,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies
  */
-export function todayCommand({ bot, statusStorage }) {
+export function createDailyHandler({ date, bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -28,7 +42,7 @@ export function todayCommand({ bot, statusStorage }) {
     })
 
     try {
-      const now = new Date()
+      const now = date
       const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
       const tomorrowStart = getTomorrowDate(todayStart)
 
@@ -48,6 +62,8 @@ export function todayCommand({ bot, statusStorage }) {
         maxDurationMs,
       })
 
+      const records = getRecords({ latestStatusBefore, statuses, dateUntil: now })
+
       await bot.telegram.editMessageText(
         message.chat.id,
         message.message_id,
@@ -56,6 +72,7 @@ export function todayCommand({ bot, statusStorage }) {
           now,
           timezoneOffsetMinutes,
           dailyStats,
+          records,
           aggregateHours,
           localize,
         }),
@@ -115,11 +132,13 @@ export function weekCommand({ bot, statusStorage }) {
         maxDurationMs,
       })
 
+      const records = getRecords({ latestStatusBefore, statuses, dateUntil: now })
+
       await bot.telegram.editMessageText(
         message.chat.id,
         message.message_id,
         undefined,
-        formatWeeklyStats({ weeklyStats, aggregateHours, localize }),
+        formatWeeklyStats({ weeklyStats, records, aggregateHours, localize }),
         { parse_mode: 'MarkdownV2' }
       )
     } catch (error) {

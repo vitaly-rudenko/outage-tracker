@@ -36,13 +36,8 @@ export class StatusCheckUseCase {
     this._reportChatId = reportChatId
   }
 
-  /**
-   *
-   * @param {{ retryIfOffline: boolean }} input
-   * @returns {Promise<{ status: Status, latestStatusFirstChange: Status }>}
-   */
-  async run({ retryIfOffline }) {
-    const status = await this._fetchCurrentStatus({ retryIfOffline })
+  async run() {
+    const status = await this._fetchCurrentStatus()
 
     logger.debug({}, 'Fetching the latest status first change')
     const latestStatusFirstChange =
@@ -61,29 +56,27 @@ export class StatusCheckUseCase {
   }
 
   /** @returns {Promise<import('./Status').Status>} */
-  async _fetchCurrentStatus({ retryIfOffline }) {
+  async _fetchCurrentStatus() {
     logger.debug({}, 'Fetching current status')
     const firstStatus = await this._statusChecker.check()
     if (firstStatus.isOnline) return firstStatus
 
-    if (retryIfOffline) {
-      for (
-        let retryAttempt = 1;
-        retryAttempt <= this._retryAttempts;
-        retryAttempt++
-      ) {
-        logger.debug(
-          { retryAttempt, retryMs: this._retryMs },
-          'Current status is offline, retrying in a moment'
-        )
-        await new Promise((resolve) => setTimeout(resolve, this._retryMs))
+    for (
+      let retryAttempt = 1;
+      retryAttempt <= this._retryAttempts;
+      retryAttempt++
+    ) {
+      logger.debug(
+        { retryAttempt, retryMs: this._retryMs },
+        'Current status is offline, retrying in a moment'
+      )
+      await new Promise((resolve) => setTimeout(resolve, this._retryMs))
 
-        logger.debug({}, 'Fetching current status again')
-        const currentStatus = await this._statusChecker.check()
+      logger.debug({}, 'Fetching current status again')
+      const currentStatus = await this._statusChecker.check()
 
-        if (currentStatus.isOnline) {
-          return currentStatus
-        }
+      if (currentStatus.isOnline) {
+        return currentStatus
       }
     }
 

@@ -21,7 +21,7 @@ import { TelegramErrorLogger } from './app/telegram/TelegramErrorLogger.js'
 import { versionCommand } from './app/telegram/flows/version.js'
 import { withLocalization } from './app/telegram/withLocalization.js'
 import { nowCommand } from './app/status/flows/now.js'
-import { todayCommand, weekCommand } from './app/status/flows/stats.js'
+import { todayCommand, weekCommand, yesterdayCommand } from './app/status/flows/stats.js'
 import { TpLinkStatusChecker } from './app/status/TpLinkStatusChecker.js'
 import { StatusCheckUseCase } from './app/status/StatusCheckUseCase.js'
 
@@ -65,6 +65,7 @@ async function start() {
 
   bot.telegram.setMyCommands([
     { command: 'now', description: localizeDefault('commands.now') },
+    { command: 'yesterday', description: localizeDefault('commands.yesterday') },
     { command: 'today', description: localizeDefault('commands.today') },
     { command: 'week', description: localizeDefault('commands.week') },
     { command: 'version', description: localizeDefault('commands.version') },
@@ -90,6 +91,7 @@ async function start() {
   })
 
   bot.command('now', nowCommand({ bot, statusChecker, statusStorage }))
+  bot.command('yesterday', yesterdayCommand({ bot, statusStorage }))
   bot.command('today', todayCommand({ bot, statusStorage }))
   bot.command('week', weekCommand({ bot, statusStorage }))
   bot.catch((error) => errorLogger.log(error))
@@ -106,7 +108,7 @@ async function start() {
       logger.info({ reportChatId, retryMs }, 'Running automatic status check')
 
       try {
-        await statusCheckUseCase.run({ retryIfOffline: true })
+        await statusCheckUseCase.run()
       } catch (error) {
         logger.error(error, 'Could not check status automatically')
       } finally {

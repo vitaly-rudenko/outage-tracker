@@ -6,6 +6,7 @@ export function formatDailyStats({
   now,
   timezoneOffsetMinutes,
   dailyStats,
+  records,
   aggregateHours,
   localize,
 }) {
@@ -15,6 +16,8 @@ export function formatDailyStats({
     date: escapeMd(formatDate(now, timezoneOffsetMinutes)),
     onlineDuration: escapeMd(formatDuration({ ms: onlineMs, localize })),
     offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
+    maxOnlineDuration: escapeMd(formatDuration({ ms: records.maxOnlineMs, localize })),
+    maxOfflineDuration: escapeMd(formatDuration({ ms: records.maxOfflineMs, localize })),
     hours: Array.from(
       new Array(Math.floor(perHour.length / aggregateHours)),
       (_, i) => {
