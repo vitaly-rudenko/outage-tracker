@@ -1,6 +1,6 @@
 {
   "name": "outage-tracker",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Power outage tracker using Telegram Bot API and TP-Link Cloud API",
   "main": "app.js",
   "type": "module",

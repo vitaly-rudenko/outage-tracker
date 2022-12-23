@@ -2,13 +2,15 @@ import { getAggregatedIcon } from './getAggregatedIcon.js'
 import { formatDuration } from './utils/date.js'
 import { escapeMd } from './utils/escapeMd.js'
 
-export function formatWeeklyStats({ weeklyStats, aggregateHours, localize }) {
+export function formatWeeklyStats({ weeklyStats, records, aggregateHours, localize }) {
   const { totalMs, onlineMs, perDay } = weeklyStats
 
   return localize('weekly.message', {
     days: perDay.length,
     onlineDuration: escapeMd(formatDuration({ ms: onlineMs, localize })),
     offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
+    maxOnlineDuration: escapeMd(formatDuration({ ms: records.maxOnlineMs, localize })),
+    maxOfflineDuration: escapeMd(formatDuration({ ms: records.maxOfflineMs, localize })),
     lines: Array.from(
       new Array(
         Math.floor(perDay[0].dailyStats.perHour.length / aggregateHours)

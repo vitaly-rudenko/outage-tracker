@@ -8,6 +8,7 @@
   "commands": {
     "now": "Поточний статус",
     "today": "Статистика за сьогодні",
+    "yesterday": "Статистика за вчора",
     "week": "Статистика за останні 7 днів",
     "start": "Розпочати роботу з ботом",
     "version": "Версія"
@@ -24,8 +25,8 @@
   "daily": {
     "message": [
       "Статистика за *{date}*:",
-      "✅ Онлайн: *{onlineDuration}*",
-      "❌ Офлайн: *{offlineDuration}*",
+      "✅ Онлайн: *{onlineDuration}* \\(макс\\.: *{maxOnlineDuration}*\\)",
+      "❌ Офлайн: *{offlineDuration}* \\(макс\\.: *{maxOfflineDuration}*\\)",
       "",
       "```",
       "{hours}",
@@ -37,8 +38,8 @@
   "weekly": {
     "message": [
       "Статистика за *{days} днів*:",
-      "✅ Онлайн: *{onlineDuration}*",
-      "❌ Офлайн: *{offlineDuration}*",
+      "✅ Онлайн: *{onlineDuration}* \\(макс\\.: *{maxOnlineDuration}*\\)",
+      "❌ Офлайн: *{offlineDuration}* \\(макс\\.: *{maxOfflineDuration}*\\)",
       "",
       "```",
       "{lines}",
