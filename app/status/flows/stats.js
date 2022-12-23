@@ -17,23 +17,30 @@ const weeklyDays = 7
 export function yesterdayCommand({ bot, statusStorage }) {
   return createDailyHandler({
     date: new Date(Date.now() - 24 * 60 * 60_000),
+    until: false,
     bot,
     statusStorage,
   })
 }
 
 export function todayCommand({ bot, statusStorage }) {
-  return createDailyHandler({ date: new Date(), bot, statusStorage })
+  return createDailyHandler({
+    date: new Date(),
+    until: true,
+    bot,
+    statusStorage,
+  })
 }
 
 /**
  * @param {{
  *   date: Date,
+ *   until: boolean,
  *   bot: import('telegraf').Telegraf,
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies
  */
-export function createDailyHandler({ date, bot, statusStorage }) {
+export function createDailyHandler({ date, until, bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
 
@@ -42,34 +49,37 @@ export function createDailyHandler({ date, bot, statusStorage }) {
     })
 
     try {
-      const now = date
-      const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
-      const tomorrowStart = getTomorrowDate(todayStart)
+      const thisDayStart = getStartOfTheDay(date, timezoneOffsetMinutes)
+      const nextDayStart = getTomorrowDate(thisDayStart)
 
       const latestStatusBefore = await statusStorage.findLatestStatusBefore(
-        todayStart
+        thisDayStart
       )
       const statuses = await statusStorage.findStatusesBetween({
-        startDateIncluding: todayStart,
-        endDateExcluding: tomorrowStart,
+        startDateIncluding: thisDayStart,
+        endDateExcluding: nextDayStart,
       })
 
       const dailyStats = gatherDailyStats({
-        dateStart: todayStart,
-        dateUntil: now,
+        dateStart: thisDayStart,
+        ...until && { dateUntil: date },
         statuses,
         latestStatusBefore,
         maxDurationMs,
       })
 
-      const records = getRecords({ latestStatusBefore, statuses, dateUntil: now })
+      const records = getRecords({
+        latestStatusBefore,
+        statuses,
+        dateUntil: until ? date : nextDayStart,
+      })
 
       await bot.telegram.editMessageText(
         message.chat.id,
         message.message_id,
         undefined,
         formatDailyStats({
-          now,
+          now: date,
           timezoneOffsetMinutes,
           dailyStats,
           records,
@@ -132,7 +142,11 @@ export function weekCommand({ bot, statusStorage }) {
         maxDurationMs,
       })
 
-      const records = getRecords({ latestStatusBefore, statuses, dateUntil: now })
+      const records = getRecords({
+        latestStatusBefore,
+        statuses,
+        dateUntil: now,
+      })
 
       await bot.telegram.editMessageText(
         message.chat.id,
