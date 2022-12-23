@@ -25,7 +25,7 @@ export function exportCommand({ bot, statusStorage }) {
   }
 }
 
-export function importCommand({ bot, statusStorage }) {
+export function importMessage({ bot, statusStorage }) {
   return async (context, next) => {
     if (!('document' in context.message)) return next()
     if (!context.message.document.file_name.endsWith('.yml')) return next()

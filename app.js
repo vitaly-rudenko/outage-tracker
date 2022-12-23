@@ -21,10 +21,14 @@ import { TelegramErrorLogger } from './app/telegram/TelegramErrorLogger.js'
 import { versionCommand } from './app/telegram/flows/version.js'
 import { withLocalization } from './app/telegram/withLocalization.js'
 import { nowCommand } from './app/status/flows/now.js'
-import { todayCommand, weekCommand, yesterdayCommand } from './app/status/flows/stats.js'
+import {
+  todayCommand,
+  weekCommand,
+  yesterdayCommand,
+} from './app/status/flows/stats.js'
 import { TpLinkStatusChecker } from './app/status/TpLinkStatusChecker.js'
 import { StatusCheckUseCase } from './app/status/StatusCheckUseCase.js'
-import { exportCommand, importCommand } from './app/status/flows/export.js'
+import { exportCommand, importMessage } from './app/status/flows/export.js'
 
 async function start() {
   const localizeDefault = withLanguage('uk')
@@ -66,14 +70,16 @@ async function start() {
 
   bot.telegram.setMyCommands([
     { command: 'now', description: localizeDefault('commands.now') },
-    { command: 'yesterday', description: localizeDefault('commands.yesterday') },
+    {
+      command: 'yesterday',
+      description: localizeDefault('commands.yesterday'),
+    },
     { command: 'today', description: localizeDefault('commands.today') },
     { command: 'week', description: localizeDefault('commands.week') },
     { command: 'export', description: localizeDefault('commands.export') },
-    { command: 'import', description: localizeDefault('commands.import') },
     { command: 'version', description: localizeDefault('commands.version') },
   ])
-  
+
   if (allowCommandsToAdminOnly) {
     bot.use(async (context, next) => {
       if (context.from && String(context.from.id) === adminUserId) {
@@ -98,15 +104,23 @@ async function start() {
   bot.command('today', todayCommand({ bot, statusStorage }))
   bot.command('week', weekCommand({ bot, statusStorage }))
   bot.command('export', exportCommand({ bot, statusStorage }))
-  bot.command('import', importCommand({ bot, statusStorage }))
+
+  bot.on(
+    'message',
+    async (context, next) => {
+      if (!('text' in context.message) || !context.message.text.startsWith('/'))
+        return next()
+    },
+    importMessage({ bot, statusStorage })
+  )
+
   bot.catch((error) => errorLogger.log(error))
 
   logger.info({}, 'Starting telegram bot')
-  bot.launch()
-    .catch((error) => {
-      logger.error(error, 'Could not launch telegram bot')
-      process.exit(1)
-    })
+  bot.launch().catch((error) => {
+    logger.error(error, 'Could not launch telegram bot')
+    process.exit(1)
+  })
 
   if (Number.isInteger(checkStatusJobIntervalMs)) {
     async function runCheckStatusJob() {
@@ -117,8 +131,11 @@ async function start() {
       } catch (error) {
         logger.error(error, 'Could not check status automatically')
       } finally {
-        logger.debug({ checkStatusJobIntervalMs }, 'Scheduling next automatic status check')
-        setTimeout(runCheckStatusJob, checkStatusJobIntervalMs);
+        logger.debug(
+          { checkStatusJobIntervalMs },
+          'Scheduling next automatic status check'
+        )
+        setTimeout(runCheckStatusJob, checkStatusJobIntervalMs)
       }
     }
 
