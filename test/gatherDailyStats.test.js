@@ -1,5 +1,5 @@
 import { gatherDailyStats } from '../app/gatherDailyStats.js'
-import { dateStart, createLastStatusBefore, createStatus } from './helpers.js'
+import { dateStart, createLatestStatusBefore, createStatus } from './helpers.js'
 
 function min(min) {
   return min * 60_000
@@ -11,7 +11,7 @@ describe('gatherDailyStats()', () => {
       gatherDailyStats({
         dateStart,
         statuses: [],
-        latestStatusBefore: createLastStatusBefore(true),
+        latestStatusBefore: createLatestStatusBefore(true),
         maxDurationMs: Infinity,
       })
     ).toEqual({
@@ -50,7 +50,7 @@ describe('gatherDailyStats()', () => {
       gatherDailyStats({
         dateStart,
         statuses: [],
-        latestStatusBefore: createLastStatusBefore(false),
+        latestStatusBefore: createLatestStatusBefore(false),
         maxDurationMs: Infinity,
       })
     ).toEqual({
@@ -133,7 +133,7 @@ describe('gatherDailyStats()', () => {
         dateStart,
         dateUntil,
         statuses: [],
-        latestStatusBefore: createLastStatusBefore(true),
+        latestStatusBefore: createLatestStatusBefore(true),
         maxDurationMs: Infinity,
       })
     ).toEqual({
@@ -215,7 +215,7 @@ describe('gatherDailyStats()', () => {
         statuses: [
           createStatus(false, '4:40'),
         ],
-        latestStatusBefore: createLastStatusBefore(true),
+        latestStatusBefore: createLatestStatusBefore(true),
         maxDurationMs: Infinity,
       })
     ).toEqual({
@@ -268,7 +268,7 @@ describe('gatherDailyStats()', () => {
           createStatus(false, '23:30'),
           createStatus(true, '23:54'),
         ],
-        latestStatusBefore: createLastStatusBefore(true, '23:56'),
+        latestStatusBefore: createLatestStatusBefore(true, '23:56'),
         maxDurationMs: 5 * 60_000,
       })
     ).toEqual({
@@ -312,7 +312,7 @@ describe('gatherDailyStats()', () => {
           createStatus(true, '20:05'),
           createStatus(true, '23:55'),
         ],
-        latestStatusBefore: createLastStatusBefore(true, '23:30'),
+        latestStatusBefore: createLatestStatusBefore(true, '23:30'),
         maxDurationMs: 75 * 60_000,
       })
     ).toEqual({
@@ -358,7 +358,7 @@ describe('gatherDailyStats()', () => {
           createStatus(true,  '17:55'),
           createStatus(false, '22:05'),
         ],
-        latestStatusBefore: createLastStatusBefore(false),
+        latestStatusBefore: createLatestStatusBefore(false),
         maxDurationMs: Infinity,
       })
     ).toEqual({
@@ -407,7 +407,7 @@ describe('gatherDailyStats()', () => {
           createStatus(false, '17:20'),
           createStatus(true,  '17:55'),
         ],
-        latestStatusBefore: createLastStatusBefore(true),
+        latestStatusBefore: createLatestStatusBefore(true),
         maxDurationMs: Infinity,
       })
     ).toEqual({

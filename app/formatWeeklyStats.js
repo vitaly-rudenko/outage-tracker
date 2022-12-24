@@ -11,6 +11,8 @@ export function formatWeeklyStats({ weeklyStats, records, aggregateHours, locali
     offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
     maxOnlineDuration: escapeMd(formatDuration({ ms: records.maxOnlineMs, localize })),
     maxOfflineDuration: escapeMd(formatDuration({ ms: records.maxOfflineMs, localize })),
+    averageOnlineDuration: escapeMd(formatDuration({ ms: records.averageOnlineMs, localize })),
+    averageOfflineDuration: escapeMd(formatDuration({ ms: records.averageOfflineMs, localize })),
     lines: Array.from(
       new Array(
         Math.floor(perDay[0].dailyStats.perHour.length / aggregateHours)

@@ -27,12 +27,15 @@
   "daily": {
     "message": [
       "Статистика за *{date}*:",
-      "✅ Онлайн: *{onlineDuration}* \\(макс\\.: *{maxOnlineDuration}*\\)",
-      "❌ Офлайн: *{offlineDuration}* \\(макс\\.: *{maxOfflineDuration}*\\)",
+      "✅ Онлайн: *{onlineDuration}*",
+      "❌ Офлайн: *{offlineDuration}*",
       "",
       "```",
       "{hours}",
-      "```"
+      "```",
+      "",
+      "_Онлайн: {averageOnlineDuration} / {maxOnlineDuration}_",
+      "_Офлайн: {averageOfflineDuration} / {maxOfflineDuration}_"
     ],
     "hour": "{icon} {time}",
     "hourWithPercentage": "{icon} {time} | {percentage}%"

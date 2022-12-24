@@ -77,6 +77,8 @@ export async function handleDailyCommand(
       latestStatusBefore,
       statuses,
       dateUntil: until ? date : nextDateStart,
+      dateStart: thisDateStart,
+      maxDurationMs,
     })
 
     await bot.telegram.editMessageText(
@@ -123,14 +125,14 @@ export function weekCommand({ bot, statusStorage }) {
     })
 
     try {
-      const now = new Date()
-      const todayStart = getStartOfTheDay(now, timezoneOffsetMinutes)
-      const tomorrowStart = getTomorrowDate(todayStart)
-      const startOfTheWeek = getOffsetDate(todayStart, -weeklyDays)
+      const date = new Date()
+      const thisDateStart = getStartOfTheDay(date, timezoneOffsetMinutes)
+      const nextDateStart = getTomorrowDate(thisDateStart)
+      const startOfTheWeek = getOffsetDate(thisDateStart, -weeklyDays)
 
       const statuses = await statusStorage.findStatusesBetween({
         startDateIncluding: startOfTheWeek,
-        endDateExcluding: tomorrowStart,
+        endDateExcluding: nextDateStart,
       })
 
       const latestStatusBefore = await statusStorage.findLatestStatusBefore(
@@ -138,8 +140,8 @@ export function weekCommand({ bot, statusStorage }) {
       )
 
       const weeklyStats = gatherWeeklyStats({
-        dateStart: todayStart,
-        dateUntil: now,
+        dateStart: thisDateStart,
+        dateUntil: date,
         days: weeklyDays,
         statuses,
         latestStatusBefore,
@@ -149,7 +151,9 @@ export function weekCommand({ bot, statusStorage }) {
       const records = getRecords({
         latestStatusBefore,
         statuses,
-        dateUntil: now,
+        dateUntil: date,
+        dateStart: thisDateStart,
+        maxDurationMs,
       })
 
       await bot.telegram.editMessageText(

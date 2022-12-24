@@ -18,6 +18,8 @@ export function formatDailyStats({
     offlineDuration: escapeMd(formatDuration({ ms: totalMs - onlineMs, localize })),
     maxOnlineDuration: escapeMd(formatDuration({ ms: records.maxOnlineMs, localize })),
     maxOfflineDuration: escapeMd(formatDuration({ ms: records.maxOfflineMs, localize })),
+    averageOnlineDuration: escapeMd(formatDuration({ ms: records.averageOnlineMs, localize })),
+    averageOfflineDuration: escapeMd(formatDuration({ ms: records.averageOfflineMs, localize })),
     hours: Array.from(
       new Array(Math.floor(perHour.length / aggregateHours)),
       (_, i) => {
