@@ -15,24 +15,27 @@ const aggregateHours = 1
 const weeklyDays = 7
 
 export function todayCommand({ bot, statusStorage }) {
-  return createDailyHandler({
-    date: new Date(),
-    until: true,
-    bot,
-    statusStorage,
-  })
+  return (context) =>
+    handleDailyCommand(context, {
+      date: new Date(),
+      until: true,
+      bot,
+      statusStorage,
+    })
 }
 
 export function yesterdayCommand({ bot, statusStorage }) {
-  return createDailyHandler({
-    date: new Date(Date.now() - 24 * 60 * 60_000),
-    until: false,
-    bot,
-    statusStorage,
-  })
+  return (context) =>
+    handleDailyCommand(context, {
+      date: new Date(Date.now() - 24 * 60 * 60_000),
+      until: false,
+      bot,
+      statusStorage,
+    })
 }
 
 /**
+ * @param {any} context
  * @param {{
  *   date: Date,
  *   until: boolean,
@@ -40,67 +43,68 @@ export function yesterdayCommand({ bot, statusStorage }) {
  *   statusStorage: import('../StatusPostgresStorage').StatusPostgresStorage,
  * }} dependencies
  */
-export function createDailyHandler({ date, until, bot, statusStorage }) {
-  return async (context) => {
-    const { localize } = context.state
+export async function handleDailyCommand(
+  context,
+  { date, until, bot, statusStorage }
+) {
+  const { localize } = context.state
 
-    const message = await context.reply(localize('gatheringStats'), {
-      parse_mode: 'MarkdownV2',
+  const message = await context.reply(localize('gatheringStats'), {
+    parse_mode: 'MarkdownV2',
+  })
+
+  try {
+    const thisDateStart = getStartOfTheDay(date, timezoneOffsetMinutes)
+    const nextDateStart = getTomorrowDate(thisDateStart)
+
+    const latestStatusBefore = await statusStorage.findLatestStatusBefore(
+      thisDateStart
+    )
+    const statuses = await statusStorage.findStatusesBetween({
+      startDateIncluding: thisDateStart,
+      endDateExcluding: nextDateStart,
     })
 
-    try {
-      const thisDateStart = getStartOfTheDay(date, timezoneOffsetMinutes)
-      const nextDateStart = getTomorrowDate(thisDateStart)
+    const dailyStats = gatherDailyStats({
+      dateStart: thisDateStart,
+      ...(until && { dateUntil: date }),
+      statuses,
+      latestStatusBefore,
+      maxDurationMs,
+    })
 
-      const latestStatusBefore = await statusStorage.findLatestStatusBefore(
-        thisDateStart
-      )
-      const statuses = await statusStorage.findStatusesBetween({
-        startDateIncluding: thisDateStart,
-        endDateExcluding: nextDateStart,
-      })
+    const records = getRecords({
+      latestStatusBefore,
+      statuses,
+      dateUntil: until ? date : nextDateStart,
+    })
 
-      const dailyStats = gatherDailyStats({
-        dateStart: thisDateStart,
-        ...until && { dateUntil: date },
-        statuses,
-        latestStatusBefore,
-        maxDurationMs,
-      })
-
-      const records = getRecords({
-        latestStatusBefore,
-        statuses,
-        dateUntil: until ? date : nextDateStart,
-      })
-
-      await bot.telegram.editMessageText(
+    await bot.telegram.editMessageText(
+      message.chat.id,
+      message.message_id,
+      undefined,
+      formatDailyStats({
+        now: date,
+        timezoneOffsetMinutes,
+        dailyStats,
+        records,
+        aggregateHours,
+        localize,
+      }),
+      { parse_mode: 'MarkdownV2' }
+    )
+  } catch (error) {
+    bot.telegram
+      .editMessageText(
         message.chat.id,
         message.message_id,
         undefined,
-        formatDailyStats({
-          now: date,
-          timezoneOffsetMinutes,
-          dailyStats,
-          records,
-          aggregateHours,
-          localize,
-        }),
+        localize('unknownError'),
         { parse_mode: 'MarkdownV2' }
       )
-    } catch (error) {
-      bot.telegram
-        .editMessageText(
-          message.chat.id,
-          message.message_id,
-          undefined,
-          localize('unknownError'),
-          { parse_mode: 'MarkdownV2' }
-        )
-        .catch(() => {})
+      .catch(() => {})
 
-      throw error
-    }
+    throw error
   }
 }
 
