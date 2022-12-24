@@ -7,6 +7,24 @@ export class StatusPostgresStorage {
     this._client = client
   }
 
+  /** @param {Status[]} statuses */
+  async batchCreate(statuses) {
+    await this._client.query(
+      `
+      INSERT INTO status (is_online, raw, created_at)
+      VALUES ${statuses
+        .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`)
+        .join(', ')}
+      RETURNING *;
+      `,
+      statuses.flatMap((status) => [
+        status.isOnline,
+        status.raw ? JSON.stringify(status.raw) : undefined,
+        status.createdAt,
+      ])
+    )
+  }
+
   /** @param {Status} status */
   async createStatus(status) {
     try {
@@ -15,7 +33,7 @@ export class StatusPostgresStorage {
         INSERT INTO status (is_online, raw, created_at)
         VALUES ($1, $2, $3)
         RETURNING *;
-      `,
+        `,
         [
           status.isOnline,
           status.raw ? JSON.stringify(status.raw) : undefined,
@@ -55,7 +73,9 @@ export class StatusPostgresStorage {
     `)
 
     const latestChangesPerStatus = response.rows.map(this.deserializeStatus)
-    latestChangesPerStatus.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    latestChangesPerStatus.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    )
 
     return latestChangesPerStatus[0]
   }
@@ -89,7 +109,15 @@ export class StatusPostgresStorage {
    *   sort?: 'ascending' | 'descending'
    * }} options
    */
-  async _find({ ids, isOnline, minDateIncluding, maxDateExcluding, limit, offset, sort } = {}) {
+  async _find({
+    ids,
+    isOnline,
+    minDateIncluding,
+    maxDateExcluding,
+    limit,
+    offset,
+    sort,
+  } = {}) {
     const conditions = []
     const variables = []
 

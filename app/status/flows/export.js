@@ -1,6 +1,8 @@
 import got from 'got'
 import yaml from 'js-yaml'
 
+const BATCH_IMPORT_COUNT = 200
+
 export function exportCommand({ bot, statusStorage }) {
   return async (context) => {
     const { localize } = context.state
@@ -46,15 +48,31 @@ export function importMessage({ bot, statusStorage }) {
 
     await statusStorage.deleteAllStatuses()
 
-    for (const status of statuses) {
-      await statusStorage.createStatus(status)
+    for (let start = 0; start < statuses.length; start += BATCH_IMPORT_COUNT) {
+      const end = Math.min(statuses.length, start + BATCH_IMPORT_COUNT)
+      const batch = statuses.slice(start, end)
+
+      await bot.telegram
+        .editMessageText(
+          message.chat.id,
+          message.message_id,
+          undefined,
+          localize('import.progress', {
+            count: start,
+            total: statuses.length,
+          }),
+          { parse_mode: 'MarkdownV2' }
+        )
+        .catch(() => {})
+
+      await statusStorage.batchCreate(batch)
     }
 
     await bot.telegram.editMessageText(
       message.chat.id,
       message.message_id,
       undefined,
-      localize('import.done', { count: statuses.length }),
+      localize('import.done', { total: statuses.length }),
       { parse_mode: 'MarkdownV2' }
     )
   }

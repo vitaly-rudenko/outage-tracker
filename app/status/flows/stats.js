@@ -74,6 +74,16 @@ export function createDailyHandler({ date, until, bot, statusStorage }) {
         dateUntil: until ? date : nextDateStart,
       })
 
+      console.log(JSON.stringify({
+        date,
+        thisDateStart,
+        nextDateStart,
+        latestStatusBefore,
+        statuses,
+        dailyStats,
+        records,
+      }, null, 2))
+
       await bot.telegram.editMessageText(
         message.chat.id,
         message.message_id,

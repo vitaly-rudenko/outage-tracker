@@ -1,0 +1,9 @@
+version: '3.7'
+services:
+  otr_app:
+    profiles:
+      - donotstart
+
+  otr_postgres:
+    ports:
+      - "5432:5432"
